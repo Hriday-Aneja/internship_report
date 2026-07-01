@@ -1,9 +1,7 @@
-import Header from "../../../components/layout/Header";
-import Footer from "../../../components/layout/Footer";
-import EmployeeDashboard from "./features/dashboard/pages/EmployeeDashboard";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return <EmployeeDashboard />;
+  return <AppRoutes />;
 }
 
 export default App;
