@@ -194,6 +194,7 @@
 
 .form-container {
   overflow: hidden;
+  perspective: 1400px;
 }
 
 /* Header */
@@ -651,4 +652,121 @@
   .auth-button {
     transition: none;
   }
+}
+
+/* ------------------------------------------------------------
+   CAPTCHA
+   ------------------------------------------------------------ */
+.auth-captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.auth-captcha-question {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 1rem;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  background: rgba(11, 61, 145, 0.05);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.auth-captcha-expr {
+  font-family: 'Courier New', monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--auth-text-heading);
+  user-select: none;
+}
+
+.auth-captcha-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  background: #ffffff;
+  color: var(--auth-text-muted);
+  cursor: pointer;
+  transition: color var(--auth-transition-fast),
+    border-color var(--auth-transition-fast), background var(--auth-transition-fast);
+}
+
+.auth-captcha-refresh:hover {
+  color: var(--auth-primary);
+  border-color: var(--auth-border-hover);
+  background: rgba(11, 61, 145, 0.04);
+}
+
+.auth-captcha-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-captcha-input {
+  padding-left: 1rem;
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+/* ------------------------------------------------------------
+   LIVE PASSWORD CHECKLIST (signup step 2)
+   ------------------------------------------------------------ */
+.auth-pwd-rules {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-pwd-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--auth-text-muted);
+  transition: color var(--auth-transition-fast);
+}
+
+.auth-pwd-rule svg {
+  flex-shrink: 0;
+  color: var(--auth-text-placeholder);
+  transition: color var(--auth-transition-fast);
+}
+
+.auth-pwd-rule-ok {
+  color: #15803d;
+}
+
+.auth-pwd-rule-ok svg {
+  color: #16a34a;
+}
+
+/* ------------------------------------------------------------
+   CANVAS CAPTCHA
+   ------------------------------------------------------------ */
+.auth-captcha-canvas-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  overflow: hidden;
+  line-height: 0;
+  background: #f5f5f5;
+}
+
+.auth-captcha-canvas {
+  display: block;
 }

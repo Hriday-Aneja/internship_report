@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -14,6 +14,8 @@ import {
   Building2,
   BadgeCheck,
   ArrowLeft,
+  RefreshCw,
+  X,
 } from 'lucide-react';
 import './login.css';
 
@@ -26,15 +28,164 @@ const DEPARTMENTS = [
   'HR',
 ];
 
-const PASSWORD_RULE =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+const PASSWORD_CHECKS = [
+  { key: 'firstCap', label: 'Starts with a capital letter', test: (p) => /^[A-Z]/.test(p) },
+  { key: 'bothCase', label: 'Includes uppercase & lowercase', test: (p) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
+  { key: 'number', label: 'Includes a number', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Includes a special character (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
+  { key: 'length', label: 'Between 8 and 12 characters', test: (p) => p.length >= 8 && p.length <= 12 },
+];
 
-const STEP1_FIELDS = ['employeeId', 'fullName', 'email', 'department', 'designation'];
+const STEP1_FIELDS = [
+  'employeeId',
+  'fullName',
+  'email',
+  'department',
+  'designation',
+  'captcha',
+];
+
+const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+
+const makeCaptcha = () => {
+  let text = '';
+  for (let i = 0; i < 6; i++) {
+    text += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
+  }
+  return text;
+};
 
 const slideVariants = {
   enter: (direction) => ({ x: direction === 'forward' ? 64 : -64, opacity: 0 }),
   center: { x: 0, opacity: 1 },
   exit: (direction) => ({ x: direction === 'forward' ? -64 : 64, opacity: 0 }),
+};
+
+const flipVariants = {
+  enter: { rotateY: 90, opacity: 0 },
+  center: { rotateY: 0, opacity: 1 },
+  exit: { rotateY: -90, opacity: 0 },
+};
+
+/* ------------------------ Live Password Checklist ------------------------ */
+
+const PasswordChecklist = ({ password }) => (
+  <ul className="auth-pwd-rules">
+    {PASSWORD_CHECKS.map((rule) => {
+      const passed = rule.test(password || '');
+      return (
+        <li
+          key={rule.key}
+          className={`auth-pwd-rule ${passed ? 'auth-pwd-rule-ok' : ''}`}
+        >
+          {passed ? (
+            <Check size={14} strokeWidth={2.75} />
+          ) : (
+            <X size={14} strokeWidth={2.75} />
+          )}
+          <span>{rule.label}</span>
+        </li>
+      );
+    })}
+  </ul>
+);
+
+/* ---------------------------- Text CAPTCHA ---------------------------- */
+
+/* --------------------------- Canvas CAPTCHA --------------------------- */
+
+const CanvasCaptcha = ({ register, errors, captcha, onRefresh }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const cssW = 180;
+    const cssH = 50;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Background
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    // Distorted characters
+    ctx.font = `${24 + Math.random() * 8}px 'Poppins', system-ui, sans-serif`;
+    for (let i = 0; i < captcha.length; i++) {
+      ctx.save();
+      ctx.translate(25 + i * 25, 25 + Math.random() * 10);
+      ctx.rotate((Math.random() - 0.5) * 0.8);
+      ctx.fillStyle = `rgb(${Math.random() * 150}, ${Math.random() * 150}, ${
+        Math.random() * 150
+      })`;
+      ctx.fillText(captcha[i], 0, 0);
+      ctx.restore();
+    }
+
+    // Noise lines
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * 180, Math.random() * 50);
+      ctx.lineTo(Math.random() * 180, Math.random() * 50);
+      ctx.strokeStyle = '#999';
+      ctx.stroke();
+    }
+
+    // Strike-through line
+    ctx.beginPath();
+    ctx.moveTo(10, 25);
+    ctx.lineTo(170, 30);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#444';
+    ctx.stroke();
+  }, [captcha]);
+
+  return (
+    <div className="auth-field">
+      <label className="auth-label">Security Check</label>
+      <div className="auth-captcha-row">
+        <div className="auth-captcha-canvas-wrap">
+          <canvas ref={canvasRef} className="auth-captcha-canvas" aria-hidden="true" />
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="auth-captcha-refresh"
+          tabIndex={-1}
+          aria-label="Get a new code"
+        >
+          <RefreshCw size={17} strokeWidth={1.75} />
+        </button>
+        <div className="auth-input-wrapper auth-captcha-input-wrap">
+          <input
+            type="text"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            placeholder="Enter code"
+            aria-label="Enter the characters shown in the image"
+            className={`auth-input auth-captcha-input ${
+              errors.captcha ? 'auth-input-error' : ''
+            }`}
+            {...register('captcha', {
+              required: 'Please enter the CAPTCHA',
+              validate: (value) =>
+                value.toLowerCase() === captcha.toLowerCase() ||
+                'Incorrect code, try again',
+            })}
+          />
+        </div>
+      </div>
+      {errors.captcha && <p className="auth-error-text">{errors.captcha.message}</p>}
+    </div>
+  );
 };
 
 /* ---------------------------- Login Panel ---------------------------- */
@@ -47,10 +198,19 @@ const LoginPanel = ({ onSwitchToSignup }) => {
   const {
     register,
     handleSubmit,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm({
-    defaultValues: { identifier: '', password: '', rememberMe: false },
+    defaultValues: { identifier: '', password: '', rememberMe: false, captcha: '' },
   });
+
+  const [captcha, setCaptcha] = useState(makeCaptcha);
+  const refreshCaptcha = () => {
+    setCaptcha(makeCaptcha());
+    setValue('captcha', '');
+    clearErrors('captcha');
+  };
 
   const onSubmit = async (data) => {
     setAuthError('');
@@ -121,9 +281,8 @@ const LoginPanel = ({ onSwitchToSignup }) => {
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder="Enter your password"
-              className={`auth-input auth-input-has-toggle ${
-                errors.password ? 'auth-input-error' : ''
-              }`}
+              className={`auth-input auth-input-has-toggle ${errors.password ? 'auth-input-error' : ''
+                }`}
               {...register('password', {
                 required: 'Password is required',
                 minLength: {
@@ -162,6 +321,13 @@ const LoginPanel = ({ onSwitchToSignup }) => {
           </span>
           <span>Remember me</span>
         </label>
+
+        <CanvasCaptcha
+          register={register}
+          errors={errors}
+          captcha={captcha}
+          onRefresh={refreshCaptcha}
+        />
 
         {authError && <div className="auth-error-banner">{authError}</div>}
 
@@ -202,6 +368,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
     handleSubmit,
     trigger,
     watch,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm({
     mode: 'onSubmit',
@@ -214,10 +382,18 @@ const SignupPanel = ({ onSwitchToLogin }) => {
       password: '',
       confirmPassword: '',
       agreeToTerms: false,
+      captcha: '',
     },
   });
 
   const password = watch('password');
+
+  const [captcha, setCaptcha] = useState(makeCaptcha);
+  const refreshCaptcha = () => {
+    setCaptcha(makeCaptcha());
+    setValue('captcha', '');
+    clearErrors('captcha');
+  };
 
   const goNext = async () => {
     const valid = await trigger(STEP1_FIELDS);
@@ -361,9 +537,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       <select
                         id="department"
                         defaultValue=""
-                        className={`auth-input auth-select ${
-                          errors.department ? 'auth-input-error' : ''
-                        }`}
+                        className={`auth-input auth-select ${errors.department ? 'auth-input-error' : ''
+                          }`}
                         {...register('department', {
                           required: 'Department is required',
                         })}
@@ -407,6 +582,13 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   </div>
                 </div>
 
+                <CanvasCaptcha
+                  register={register}
+                  errors={errors}
+                  captcha={captcha}
+                  onRefresh={refreshCaptcha}
+                />
+
                 <button type="button" onClick={goNext} className="auth-button">
                   Next
                 </button>
@@ -435,15 +617,22 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       placeholder="Create a strong password"
-                      className={`auth-input auth-input-has-toggle ${
-                        errors.password ? 'auth-input-error' : ''
-                      }`}
+                      className={`auth-input auth-input-has-toggle ${errors.password ? 'auth-input-error' : ''
+                        }`}
                       {...register('password', {
                         required: 'Password is required',
-                        pattern: {
-                          value: PASSWORD_RULE,
-                          message:
-                            'Min 8 characters, with upper, lower, number & symbol',
+                        validate: {
+                          firstCap: (v) =>
+                            /^[A-Z]/.test(v) || 'Must start with a capital letter',
+                          bothCase: (v) =>
+                            (/[a-z]/.test(v) && /[A-Z]/.test(v)) ||
+                            'Include upper & lower case',
+                          number: (v) => /\d/.test(v) || 'Include a number',
+                          special: (v) =>
+                            /[!@#$%^&*]/.test(v) || 'Include a special character',
+                          length: (v) =>
+                            (v.length >= 8 && v.length <= 12) ||
+                            'Must be 8 to 12 characters',
                         },
                       })}
                     />
@@ -464,6 +653,9 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   {errors.password && (
                     <p className="auth-error-text">{errors.password.message}</p>
                   )}
+                  {password.length > 0 && (
+                    <PasswordChecklist password={password} />
+                  )}
                 </div>
 
                 <div className="auth-field">
@@ -479,9 +671,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       type={showConfirmPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       placeholder="Re-enter your password"
-                      className={`auth-input auth-input-has-toggle ${
-                        errors.confirmPassword ? 'auth-input-error' : ''
-                      }`}
+                      className={`auth-input auth-input-has-toggle ${errors.confirmPassword ? 'auth-input-error' : ''
+                        }`}
                       {...register('confirmPassword', {
                         required: 'Please confirm your password',
                         validate: (value) =>
@@ -590,7 +781,7 @@ const Auth = () => {
       <div className="auth-bg-circle auth-bg-circle-three" />
 
       <div className="auth-center">
-        
+
 
         <motion.div
           className="auth-card"
@@ -601,12 +792,11 @@ const Auth = () => {
             <AnimatePresence mode="wait" custom={mode} initial={false}>
               <motion.div
                 key={mode}
-                custom={mode}
-                variants={slideVariants}
+                variants={flipVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
                 {mode === 'login' ? (
                   <LoginPanel onSwitchToSignup={switchToSignup} />

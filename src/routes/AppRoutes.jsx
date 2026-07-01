@@ -12,8 +12,7 @@ function AppRoutes() {
   return (
     <Routes>
 
-      {/* Authentication Pages */}
-
+      {/* Authentication */}
       <Route
         path="/login"
         element={
@@ -27,7 +26,7 @@ function AppRoutes() {
         path="/signup"
         element={
           <AuthLayout>
-            <Signup />
+            <Login startFlipped />
           </AuthLayout>
         }
       />
