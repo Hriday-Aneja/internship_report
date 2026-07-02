@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -68,27 +67,46 @@ const flipVariants = {
   exit: { rotateY: -90, opacity: 0 },
 };
 
-/* ------------------------ Live Password Checklist ------------------------ */
+const popoverVariants = {
+  enter: { opacity: 0, y: -8, scale: 0.96 },
+  center: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -8, scale: 0.96 },
+};
+
+/* ------------------- Live Password Checklist (floating) ------------------- */
 
 const PasswordChecklist = ({ password }) => (
-  <ul className="auth-pwd-rules">
-    {PASSWORD_CHECKS.map((rule) => {
-      const passed = rule.test(password || '');
-      return (
-        <li
-          key={rule.key}
-          className={`auth-pwd-rule ${passed ? 'auth-pwd-rule-ok' : ''}`}
-        >
-          {passed ? (
-            <Check size={14} strokeWidth={2.75} />
-          ) : (
-            <X size={14} strokeWidth={2.75} />
-          )}
-          <span>{rule.label}</span>
-        </li>
-      );
-    })}
-  </ul>
+  <motion.div
+    key="pwd-popover"
+    className="auth-pwd-popover"
+    variants={popoverVariants}
+    initial="enter"
+    animate="center"
+    exit="exit"
+    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+    // Prevent the popover from stealing focus from the password input
+    // (which would otherwise fire the input's onBlur and close this).
+    onMouseDown={(e) => e.preventDefault()}
+  >
+    <ul className="auth-pwd-rules">
+      {PASSWORD_CHECKS.map((rule) => {
+        const passed = rule.test(password || '');
+        return (
+          <li
+            key={rule.key}
+            className={`auth-pwd-rule ${passed ? 'auth-pwd-rule-ok' : ''}`}
+          >
+            {passed ? (
+              <Check size={14} strokeWidth={2.75} />
+            ) : (
+              <X size={14} strokeWidth={2.75} />
+            )}
+            <span>{rule.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </motion.div>
 );
 
 /* ---------------------------- Text CAPTCHA ---------------------------- */
@@ -192,7 +210,6 @@ const CanvasCaptcha = ({ register, errors, captcha, onRefresh }) => {
 /* ---------------------------- Login Panel ---------------------------- */
 
 const LoginPanel = ({ onSwitchToSignup }) => {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -229,7 +246,6 @@ const LoginPanel = ({ onSwitchToSignup }) => {
 
     console.log('Login payload (dummy):', data);
     setIsSubmitting(false);
-    navigate('/dashboard');
   };
 
   return (
@@ -363,6 +379,7 @@ const SignupPanel = ({ onSwitchToLogin }) => {
   const [stepDirection, setStepDirection] = useState('forward');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPwdRules, setShowPwdRules] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -421,6 +438,26 @@ const SignupPanel = ({ onSwitchToLogin }) => {
     setIsSubmitting(false);
     onSwitchToLogin();
   };
+
+  // Registered once so we can layer our own focus/blur handling on top of
+  // react-hook-form's, without clobbering RHF's onBlur (used for touched
+  // state tracking).
+  const passwordField = register('password', {
+    required: 'Password is required',
+    validate: {
+      firstCap: (v) =>
+        /^[A-Z]/.test(v) || 'Must start with a capital letter',
+      bothCase: (v) =>
+        (/[a-z]/.test(v) && /[A-Z]/.test(v)) ||
+        'Include upper & lower case',
+      number: (v) => /\d/.test(v) || 'Include a number',
+      special: (v) =>
+        /[!@#$%^&*]/.test(v) || 'Include a special character',
+      length: (v) =>
+        (v.length >= 8 && v.length <= 12) ||
+        'Must be 8 to 12 characters',
+    },
+  });
 
   return (
     <div className="signup-panel">
@@ -607,7 +644,7 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="signup-step"
               >
-                <div className="auth-field">
+                <div className="auth-field auth-field--password">
                   <label htmlFor="password" className="auth-label">
                     Password
                   </label>
@@ -622,22 +659,12 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       placeholder="Create a strong password"
                       className={`auth-input auth-input-has-toggle ${errors.password ? 'auth-input-error' : ''
                         }`}
-                      {...register('password', {
-                        required: 'Password is required',
-                        validate: {
-                          firstCap: (v) =>
-                            /^[A-Z]/.test(v) || 'Must start with a capital letter',
-                          bothCase: (v) =>
-                            (/[a-z]/.test(v) && /[A-Z]/.test(v)) ||
-                            'Include upper & lower case',
-                          number: (v) => /\d/.test(v) || 'Include a number',
-                          special: (v) =>
-                            /[!@#$%^&*]/.test(v) || 'Include a special character',
-                          length: (v) =>
-                            (v.length >= 8 && v.length <= 12) ||
-                            'Must be 8 to 12 characters',
-                        },
-                      })}
+                      {...passwordField}
+                      onFocus={() => setShowPwdRules(true)}
+                      onBlur={(e) => {
+                        passwordField.onBlur(e);
+                        setShowPwdRules(false);
+                      }}
                     />
                     <button
                       type="button"
@@ -656,9 +683,13 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   {errors.password && (
                     <p className="auth-error-text">{errors.password.message}</p>
                   )}
-                  {password.length > 0 && (
-                    <PasswordChecklist password={password} />
-                  )}
+
+                  {/* Floating live-validation popover — appears on focus,
+                      tracks each keystroke, disappears on blur. Does not
+                      push the confirm-password field below it. */}
+                  <AnimatePresence>
+                    {showPwdRules && <PasswordChecklist password={password} />}
+                  </AnimatePresence>
                 </div>
 
                 <div className="auth-field">
@@ -771,19 +802,11 @@ const SignupPanel = ({ onSwitchToLogin }) => {
 
 /* ------------------------------ Auth Page ------------------------------ */
 
-const Auth = ({ initialMode = 'login' }) => {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
+const Auth = () => {
+  const [mode, setMode] = useState('login'); // 'login' | 'signup'
 
-  const switchToSignup = () => {
-    setMode('signup');
-    navigate('/signup');
-  };
-
-  const switchToLogin = () => {
-    setMode('login');
-    navigate('/login');
-  };
+  const switchToSignup = () => setMode('signup');
+  const switchToLogin = () => setMode('login');
 
   return (
     <div className="auth-page">
@@ -818,10 +841,6 @@ const Auth = ({ initialMode = 'login' }) => {
             </AnimatePresence>
           </motion.div>
         </motion.div>
-
-        <p className="auth-footnote">
-          Authorized personnel only · Protected under IT Act, 2000
-        </p>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import Sidebar from "../components/Sidebar/Sidebar";
 import "./MainLayout.css";
 
 function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
     setSidebarOpen((prev) => !prev);

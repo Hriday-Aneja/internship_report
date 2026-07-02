@@ -28,6 +28,8 @@
   cursor: pointer;
   text-align: left;
   font: inherit;
+  margin-top: auto;
+  margin-bottom: 16px;
 }
 
 
@@ -37,14 +39,16 @@
   background: #0f2747;
   color: #f5f7fb;
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   overflow-y: auto;
   flex-shrink: 0;
   position: fixed;
-  top: 72px;
+  top: 82px;
   left: 0;
-  height: calc(100vh - 72px);
+  height: calc(100vh - 82px);
   z-index: 1100;
 }
 
@@ -57,7 +61,14 @@
     position: relative;
     top: auto;
     left: auto;
-    height: auto;
+    height: 100%;
+    transform: none;
+    margin-left: -240px;
+    transition: margin-left 0.3s ease;
+  }
+  .sidebar.open {
+    transform: none;
+    margin-left: 0;
   }
 }
 .sidebar-link {

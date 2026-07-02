@@ -52,16 +52,16 @@ function Sidebar({ sidebarOpen }) {
           <FaFolder className="sidebar-icon" />
           <span className="sidebar-text">Documents</span>
         </NavLink>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="sidebar-link sidebar-logout-btn"
-        >
-          <FaSignOutAlt className="sidebar-icon" />
-          <span className="sidebar-text">Logout</span>
-        </button>
       </nav>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="sidebar-link sidebar-logout-btn"
+      >
+        <FaSignOutAlt className="sidebar-icon" />
+        <span className="sidebar-text">Logout</span>
+      </button>
     </aside>
   );
 }
