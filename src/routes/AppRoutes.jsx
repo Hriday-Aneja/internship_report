@@ -11,47 +11,15 @@ import AuthLayout from "../layouts/AuthLayout";
 function AppRoutes() {
   return (
     <Routes>
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Route>
 
-      {/* Authentication Pages */}
-
-      <Route
-        path="/login"
-        element={
-          <AuthLayout>
-            <Login />
-          </AuthLayout>
-        }
-      />
-
-      <Route
-        path="/signup"
-        element={
-          <AuthLayout>
-            <Signup />
-          </AuthLayout>
-        }
-      />
-
-      {/* Main Website */}
-
-      <Route
-        path="/"
-        element={
-          <MainLayout>
-            <Home />
-          </MainLayout>
-        }
-      />
-
-      <Route
-        path="/dashboard"
-        element={
-          <MainLayout>
-            <Dashboard />
-          </MainLayout>
-        }
-      />
-
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
     </Routes>
   );
 }
