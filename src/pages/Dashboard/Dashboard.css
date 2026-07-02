@@ -101,6 +101,12 @@
 
     transition:.3s;
 
+    border:none;
+
+    width:100%;
+
+    font:inherit;
+
 }
 
 .action-card:hover{

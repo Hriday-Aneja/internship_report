@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -191,6 +192,7 @@ const CanvasCaptcha = ({ register, errors, captcha, onRefresh }) => {
 /* ---------------------------- Login Panel ---------------------------- */
 
 const LoginPanel = ({ onSwitchToSignup }) => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -227,6 +229,7 @@ const LoginPanel = ({ onSwitchToSignup }) => {
 
     console.log('Login payload (dummy):', data);
     setIsSubmitting(false);
+    navigate('/dashboard');
   };
 
   return (
@@ -768,11 +771,19 @@ const SignupPanel = ({ onSwitchToLogin }) => {
 
 /* ------------------------------ Auth Page ------------------------------ */
 
-const Auth = () => {
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+const Auth = ({ initialMode = 'login' }) => {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
 
-  const switchToSignup = () => setMode('signup');
-  const switchToLogin = () => setMode('login');
+  const switchToSignup = () => {
+    setMode('signup');
+    navigate('/signup');
+  };
+
+  const switchToLogin = () => {
+    setMode('login');
+    navigate('/login');
+  };
 
   return (
     <div className="auth-page">

@@ -21,6 +21,15 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.sidebar-logout-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
 
 
 .sidebar {

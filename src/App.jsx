@@ -1,12 +1,7 @@
-import MainLayout from "./layouts/MainLayout";
-import WeeklyReport from "./pages/Dashboard/Dashboard";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return (
-    <MainLayout>
-      <WeeklyReport />
-    </MainLayout>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
