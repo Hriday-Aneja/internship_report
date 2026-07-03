@@ -1,18 +1,22 @@
 import "./Footer.css";
+import { FaShieldAlt, FaEnvelope } from "react-icons/fa";
 
 function Footer() {
   return (
     <footer className="footer">
-     
+      <div className="footer-left">
+        <FaShieldAlt className="footer-icon" />
+        <span>Secure Portal</span>
+      </div>
 
       <div className="footer-center">
-        <p>© 2026 C-DAC Delhi. All Rights Reserved.</p>
-        <span>Prepared for Internal Reporting & Task Management</span>
+        © 2026 <strong>C-DAC Delhi</strong> | Internal Reporting & Task Management
       </div>
 
       <div className="footer-right">
-        <p>Support: admin@cdacdelhi.in</p>
-        <span>Version 1.0</span>
+        <FaEnvelope className="footer-icon" />
+        <span>admin@cdacdelhi.in</span>
+        <span className="version">v1.0</span>
       </div>
     </footer>
   );
