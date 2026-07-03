@@ -1,23 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Building2,
+  BadgeCheck,
   Loader2,
   Check,
   IdCard,
   Lock,
   Mail,
   User,
-  Building2,
-  BadgeCheck,
+  Phone,
+  MapPin,
   ArrowLeft,
   RefreshCw,
   X,
 } from 'lucide-react';
 import './login.css';
+import Loading from '../../components/Loading/Loading';
+import Toast from '../../components/Toast/Toast';
+
+const PASSWORD_CHECKS = [
+  { key: 'firstCap', label: 'Starts with a capital letter', test: (p) => /^[A-Z]/.test(p) },
+  { key: 'bothCase', label: 'Includes uppercase & lowercase', test: (p) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
+  { key: 'number', label: 'Includes a number', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Includes a special character (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
+  { key: 'length', label: 'Between 8 and 12 characters', test: (p) => p.length >= 8 && p.length <= 12 },
+];
 
 const DEPARTMENTS = [
   'Software Development',
@@ -28,20 +41,12 @@ const DEPARTMENTS = [
   'HR',
 ];
 
-const PASSWORD_CHECKS = [
-  { key: 'firstCap', label: 'Starts with a capital letter', test: (p) => /^[A-Z]/.test(p) },
-  { key: 'bothCase', label: 'Includes uppercase & lowercase', test: (p) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
-  { key: 'number', label: 'Includes a number', test: (p) => /\d/.test(p) },
-  { key: 'special', label: 'Includes a special character (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
-  { key: 'length', label: 'Between 8 and 12 characters', test: (p) => p.length >= 8 && p.length <= 12 },
-];
-
 const STEP1_FIELDS = [
   'employeeId',
   'fullName',
   'email',
-  'department',
-  'designation',
+  'phoneNumber',
+  'address',
   'captcha',
 ];
 
@@ -210,9 +215,13 @@ const CanvasCaptcha = ({ register, errors, captcha, onRefresh }) => {
 /* ---------------------------- Login Panel ---------------------------- */
 
 const LoginPanel = ({ onSwitchToSignup }) => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showLoading, setShowLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   const {
     register,
@@ -235,21 +244,67 @@ const LoginPanel = ({ onSwitchToSignup }) => {
     setAuthError('');
     setIsSubmitting(true);
 
-    // Dummy auth — no backend yet
     await new Promise((resolve) => setTimeout(resolve, 900));
 
-    if (data.password.length < 6) {
-      setAuthError('Invalid Employee ID / Email or Password.');
-      setIsSubmitting(false);
-      return;
-    }
+    try {
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
 
-    console.log('Login payload (dummy):', data);
-    setIsSubmitting(false);
+      // Seed a default user if there are no registered accounts in localStorage
+      if (existingUsers.length === 0) {
+        existingUsers.push({
+          employeeId: 'CDAC1234',
+          fullName: 'Default User',
+          email: 'user@cdac.in',
+          department: 'Software Development',
+          designation: 'Project Engineer',
+          password: 'password123',
+        });
+        localStorage.setItem('users', JSON.stringify(existingUsers));
+      }
+
+      // Check if user credentials match
+      const matchedUser = existingUsers.find(
+        (u) =>
+          (u.employeeId.toLowerCase() === data.identifier.toLowerCase() ||
+            u.email.toLowerCase() === data.identifier.toLowerCase()) &&
+          u.password === data.password
+      );
+
+      if (!matchedUser) {
+        setAuthError('Invalid Employee ID / Email or Password.');
+        // regenerate captcha on auth failure
+        refreshCaptcha();
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Store current user info in localStorage
+      localStorage.setItem('currentUser', JSON.stringify(matchedUser));
+      setIsSubmitting(false);
+      // show toast + loading screen then navigate
+      setToastMessage('Login Successful!');
+      setShowToast(true);
+      setShowLoading(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1400);
+    } catch (e) {
+      setAuthError('Failed to sign in. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  // Called when RHF validation fails — if captcha is wrong, refresh it
+  const onError = (errors) => {
+    if (errors && errors.captcha) {
+      refreshCaptcha();
+    }
   };
 
   return (
     <div className="login-panel">
+      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
+      {showLoading && <Loading />}
       <div className="auth-header">
         <h2 className="auth-title">Welcome back</h2>
         <p className="auth-subtitle">
@@ -257,7 +312,7 @@ const LoginPanel = ({ onSwitchToSignup }) => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="auth-form">
+      <form onSubmit={handleSubmit(onSubmit, onError)} noValidate className="auth-form">
         <div className="auth-field">
           <label htmlFor="identifier" className="auth-label">
             Employee ID / Official Email
@@ -397,8 +452,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
       employeeId: '',
       fullName: '',
       email: '',
-      department: '',
-      designation: '',
+      phoneNumber: '',
+      address: '',
       password: '',
       confirmPassword: '',
       agreeToTerms: false,
@@ -431,12 +486,41 @@ const SignupPanel = ({ onSwitchToLogin }) => {
     setSubmitError('');
     setIsSubmitting(true);
 
-    // Dummy submit — no backend yet
     await new Promise((resolve) => setTimeout(resolve, 900));
 
-    console.log('Signup payload (dummy):', data);
-    setIsSubmitting(false);
-    onSwitchToLogin();
+    try {
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+
+      // Check if user already exists
+      const userExists = existingUsers.some(
+        (u) =>
+          u.employeeId.toLowerCase() === data.employeeId.toLowerCase() ||
+          u.email.toLowerCase() === data.email.toLowerCase()
+      );
+
+      if (userExists) {
+        setSubmitError('An account with this Employee ID or Email already exists.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Add new user
+      existingUsers.push({
+        employeeId: data.employeeId,
+        fullName: data.fullName,
+        email: data.email,
+        department: data.department,
+        designation: data.designation,
+        password: data.password,
+      });
+
+      localStorage.setItem('users', JSON.stringify(existingUsers));
+      setIsSubmitting(false);
+      onSwitchToLogin();
+    } catch (e) {
+      setSubmitError('Failed to create account. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   // Registered once so we can layer our own focus/blur handling on top of
