@@ -1,0 +1,22 @@
+.page-shell {
+  padding: 24px;
+}
+
+.page-shell-header h1 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  color: #0f2747;
+}
+
+.page-shell-header p {
+  margin: 0 0 24px;
+  color: #64748b;
+}
+
+.page-shell-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 39, 71, 0.08);
+}

@@ -1,21 +1,36 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Building2,
+  BadgeCheck,
   Loader2,
   Check,
   IdCard,
   Lock,
   Mail,
   User,
-  Building2,
-  BadgeCheck,
+  Phone,
+  MapPin,
   ArrowLeft,
+  RefreshCw,
+  X,
 } from 'lucide-react';
 import './login.css';
+import Loading from '../../components/Loading/Loading';
+import Toast from '../../components/Toast/Toast';
+
+const PASSWORD_CHECKS = [
+  { key: 'firstCap', label: 'Starts with a capital letter', test: (p) => /^[A-Z]/.test(p) },
+  { key: 'bothCase', label: 'Includes uppercase & lowercase', test: (p) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
+  { key: 'number', label: 'Includes a number', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Includes a special character (!@#$%^&*)', test: (p) => /[!@#$%^&*]/.test(p) },
+  { key: 'length', label: 'Between 8 and 12 characters', test: (p) => p.length >= 8 && p.length <= 12 },
+];
 
 const DEPARTMENTS = [
   'Software Development',
@@ -26,10 +41,24 @@ const DEPARTMENTS = [
   'HR',
 ];
 
-const PASSWORD_RULE =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+const STEP1_FIELDS = [
+  'employeeId',
+  'fullName',
+  'email',
+  'phoneNumber',
+  'address',
+  'captcha',
+];
 
-const STEP1_FIELDS = ['employeeId', 'fullName', 'email', 'department', 'designation'];
+const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+
+const makeCaptcha = () => {
+  let text = '';
+  for (let i = 0; i < 6; i++) {
+    text += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
+  }
+  return text;
+};
 
 const slideVariants = {
   enter: (direction) => ({ x: direction === 'forward' ? 64 : -64, opacity: 0 }),
@@ -37,40 +66,245 @@ const slideVariants = {
   exit: (direction) => ({ x: direction === 'forward' ? -64 : 64, opacity: 0 }),
 };
 
+const flipVariants = {
+  enter: { rotateY: 90, opacity: 0 },
+  center: { rotateY: 0, opacity: 1 },
+  exit: { rotateY: -90, opacity: 0 },
+};
+
+const popoverVariants = {
+  enter: { opacity: 0, y: -8, scale: 0.96 },
+  center: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -8, scale: 0.96 },
+};
+
+/* ------------------- Live Password Checklist (floating) ------------------- */
+
+const PasswordChecklist = ({ password }) => (
+  <motion.div
+    key="pwd-popover"
+    className="auth-pwd-popover"
+    variants={popoverVariants}
+    initial="enter"
+    animate="center"
+    exit="exit"
+    transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+    // Prevent the popover from stealing focus from the password input
+    // (which would otherwise fire the input's onBlur and close this).
+    onMouseDown={(e) => e.preventDefault()}
+  >
+    <ul className="auth-pwd-rules">
+      {PASSWORD_CHECKS.map((rule) => {
+        const passed = rule.test(password || '');
+        return (
+          <li
+            key={rule.key}
+            className={`auth-pwd-rule ${passed ? 'auth-pwd-rule-ok' : ''}`}
+          >
+            {passed ? (
+              <Check size={14} strokeWidth={2.75} />
+            ) : (
+              <X size={14} strokeWidth={2.75} />
+            )}
+            <span>{rule.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </motion.div>
+);
+
+/* ---------------------------- Text CAPTCHA ---------------------------- */
+
+/* --------------------------- Canvas CAPTCHA --------------------------- */
+
+const CanvasCaptcha = ({ register, errors, captcha, onRefresh }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const cssW = 180;
+    const cssH = 50;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Background
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    // Distorted characters
+    ctx.font = `${24 + Math.random() * 8}px 'Poppins', system-ui, sans-serif`;
+    for (let i = 0; i < captcha.length; i++) {
+      ctx.save();
+      ctx.translate(25 + i * 25, 25 + Math.random() * 10);
+      ctx.rotate((Math.random() - 0.5) * 0.8);
+      ctx.fillStyle = `rgb(${Math.random() * 150}, ${Math.random() * 150}, ${
+        Math.random() * 150
+      })`;
+      ctx.fillText(captcha[i], 0, 0);
+      ctx.restore();
+    }
+
+    // Noise lines
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * 180, Math.random() * 50);
+      ctx.lineTo(Math.random() * 180, Math.random() * 50);
+      ctx.strokeStyle = '#999';
+      ctx.stroke();
+    }
+
+    // Strike-through line
+    ctx.beginPath();
+    ctx.moveTo(10, 25);
+    ctx.lineTo(170, 30);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#444';
+    ctx.stroke();
+  }, [captcha]);
+
+  return (
+    <div className="auth-field">
+      <label className="auth-label">Security Check</label>
+      <div className="auth-captcha-row">
+        <div className="auth-captcha-canvas-wrap">
+          <canvas ref={canvasRef} className="auth-captcha-canvas" aria-hidden="true" />
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="auth-captcha-refresh"
+          tabIndex={-1}
+          aria-label="Get a new code"
+        >
+          <RefreshCw size={17} strokeWidth={1.75} />
+        </button>
+        <div className="auth-input-wrapper auth-captcha-input-wrap">
+          <input
+            type="text"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            placeholder="Enter code"
+            aria-label="Enter the characters shown in the image"
+            className={`auth-input auth-captcha-input ${
+              errors.captcha ? 'auth-input-error' : ''
+            }`}
+            {...register('captcha', {
+              required: 'Please enter the CAPTCHA',
+              validate: (value) =>
+                value.toLowerCase() === captcha.toLowerCase() ||
+                'Incorrect code, try again',
+            })}
+          />
+        </div>
+      </div>
+      {errors.captcha && <p className="auth-error-text">{errors.captcha.message}</p>}
+    </div>
+  );
+};
+
 /* ---------------------------- Login Panel ---------------------------- */
 
 const LoginPanel = ({ onSwitchToSignup }) => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showLoading, setShowLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm({
-    defaultValues: { identifier: '', password: '', rememberMe: false },
+    defaultValues: { identifier: '', password: '', rememberMe: false, captcha: '' },
   });
+
+  const [captcha, setCaptcha] = useState(makeCaptcha);
+  const refreshCaptcha = () => {
+    setCaptcha(makeCaptcha());
+    setValue('captcha', '');
+    clearErrors('captcha');
+  };
 
   const onSubmit = async (data) => {
     setAuthError('');
     setIsSubmitting(true);
 
-    // Dummy auth — no backend yet
     await new Promise((resolve) => setTimeout(resolve, 900));
 
-    if (data.password.length < 6) {
-      setAuthError('Invalid Employee ID / Email or Password.');
-      setIsSubmitting(false);
-      return;
-    }
+    try {
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
 
-    console.log('Login payload (dummy):', data);
-    setIsSubmitting(false);
+      // Seed a default user if there are no registered accounts in localStorage
+      if (existingUsers.length === 0) {
+        existingUsers.push({
+          employeeId: 'CDAC1234',
+          fullName: 'Default User',
+          email: 'user@cdac.in',
+          department: 'Software Development',
+          designation: 'Project Engineer',
+          password: 'password123',
+        });
+        localStorage.setItem('users', JSON.stringify(existingUsers));
+      }
+
+      // Check if user credentials match
+      const matchedUser = existingUsers.find(
+        (u) =>
+          (u.employeeId.toLowerCase() === data.identifier.toLowerCase() ||
+            u.email.toLowerCase() === data.identifier.toLowerCase()) &&
+          u.password === data.password
+      );
+
+      if (!matchedUser) {
+        setAuthError('Invalid Employee ID / Email or Password.');
+        // regenerate captcha on auth failure
+        refreshCaptcha();
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Store current user info in localStorage
+      localStorage.setItem('currentUser', JSON.stringify(matchedUser));
+      setIsSubmitting(false);
+      // show toast + loading screen then navigate
+      setToastMessage('Login Successful!');
+      setShowToast(true);
+      setShowLoading(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1400);
+    } catch (e) {
+      setAuthError('Failed to sign in. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  // Called when RHF validation fails — if captcha is wrong, refresh it
+  const onError = (errors) => {
+    if (errors && errors.captcha) {
+      refreshCaptcha();
+    }
   };
 
   return (
     <div className="login-panel">
+      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
+      {showLoading && <Loading />}
       <div className="auth-header">
         <h2 className="auth-title">Welcome back</h2>
         <p className="auth-subtitle">
@@ -78,7 +312,7 @@ const LoginPanel = ({ onSwitchToSignup }) => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="auth-form">
+      <form onSubmit={handleSubmit(onSubmit, onError)} noValidate className="auth-form">
         <div className="auth-field">
           <label htmlFor="identifier" className="auth-label">
             Employee ID / Official Email
@@ -121,9 +355,8 @@ const LoginPanel = ({ onSwitchToSignup }) => {
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder="Enter your password"
-              className={`auth-input auth-input-has-toggle ${
-                errors.password ? 'auth-input-error' : ''
-              }`}
+              className={`auth-input auth-input-has-toggle ${errors.password ? 'auth-input-error' : ''
+                }`}
               {...register('password', {
                 required: 'Password is required',
                 minLength: {
@@ -163,6 +396,13 @@ const LoginPanel = ({ onSwitchToSignup }) => {
           <span>Remember me</span>
         </label>
 
+        <CanvasCaptcha
+          register={register}
+          errors={errors}
+          captcha={captcha}
+          onRefresh={refreshCaptcha}
+        />
+
         {authError && <div className="auth-error-banner">{authError}</div>}
 
         <button type="submit" disabled={isSubmitting} className="auth-button">
@@ -194,6 +434,7 @@ const SignupPanel = ({ onSwitchToLogin }) => {
   const [stepDirection, setStepDirection] = useState('forward');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPwdRules, setShowPwdRules] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -202,6 +443,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
     handleSubmit,
     trigger,
     watch,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm({
     mode: 'onSubmit',
@@ -209,15 +452,23 @@ const SignupPanel = ({ onSwitchToLogin }) => {
       employeeId: '',
       fullName: '',
       email: '',
-      department: '',
-      designation: '',
+      phoneNumber: '',
+      address: '',
       password: '',
       confirmPassword: '',
       agreeToTerms: false,
+      captcha: '',
     },
   });
 
   const password = watch('password');
+
+  const [captcha, setCaptcha] = useState(makeCaptcha);
+  const refreshCaptcha = () => {
+    setCaptcha(makeCaptcha());
+    setValue('captcha', '');
+    clearErrors('captcha');
+  };
 
   const goNext = async () => {
     const valid = await trigger(STEP1_FIELDS);
@@ -235,13 +486,62 @@ const SignupPanel = ({ onSwitchToLogin }) => {
     setSubmitError('');
     setIsSubmitting(true);
 
-    // Dummy submit — no backend yet
     await new Promise((resolve) => setTimeout(resolve, 900));
 
-    console.log('Signup payload (dummy):', data);
-    setIsSubmitting(false);
-    onSwitchToLogin();
+    try {
+      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
+
+      // Check if user already exists
+      const userExists = existingUsers.some(
+        (u) =>
+          u.employeeId.toLowerCase() === data.employeeId.toLowerCase() ||
+          u.email.toLowerCase() === data.email.toLowerCase()
+      );
+
+      if (userExists) {
+        setSubmitError('An account with this Employee ID or Email already exists.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Add new user
+      existingUsers.push({
+        employeeId: data.employeeId,
+        fullName: data.fullName,
+        email: data.email,
+        department: data.department,
+        designation: data.designation,
+        password: data.password,
+      });
+
+      localStorage.setItem('users', JSON.stringify(existingUsers));
+      setIsSubmitting(false);
+      onSwitchToLogin();
+    } catch (e) {
+      setSubmitError('Failed to create account. Please try again.');
+      setIsSubmitting(false);
+    }
   };
+
+  // Registered once so we can layer our own focus/blur handling on top of
+  // react-hook-form's, without clobbering RHF's onBlur (used for touched
+  // state tracking).
+  const passwordField = register('password', {
+    required: 'Password is required',
+    validate: {
+      firstCap: (v) =>
+        /^[A-Z]/.test(v) || 'Must start with a capital letter',
+      bothCase: (v) =>
+        (/[a-z]/.test(v) && /[A-Z]/.test(v)) ||
+        'Include upper & lower case',
+      number: (v) => /\d/.test(v) || 'Include a number',
+      special: (v) =>
+        /[!@#$%^&*]/.test(v) || 'Include a special character',
+      length: (v) =>
+        (v.length >= 8 && v.length <= 12) ||
+        'Must be 8 to 12 characters',
+    },
+  });
 
   return (
     <div className="signup-panel">
@@ -361,9 +661,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       <select
                         id="department"
                         defaultValue=""
-                        className={`auth-input auth-select ${
-                          errors.department ? 'auth-input-error' : ''
-                        }`}
+                        className={`auth-input auth-select ${errors.department ? 'auth-input-error' : ''
+                          }`}
                         {...register('department', {
                           required: 'Department is required',
                         })}
@@ -407,6 +706,13 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   </div>
                 </div>
 
+                <CanvasCaptcha
+                  register={register}
+                  errors={errors}
+                  captcha={captcha}
+                  onRefresh={refreshCaptcha}
+                />
+
                 <button type="button" onClick={goNext} className="auth-button">
                   Next
                 </button>
@@ -422,7 +728,7 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="signup-step"
               >
-                <div className="auth-field">
+                <div className="auth-field auth-field--password">
                   <label htmlFor="password" className="auth-label">
                     Password
                   </label>
@@ -435,17 +741,14 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       placeholder="Create a strong password"
-                      className={`auth-input auth-input-has-toggle ${
-                        errors.password ? 'auth-input-error' : ''
-                      }`}
-                      {...register('password', {
-                        required: 'Password is required',
-                        pattern: {
-                          value: PASSWORD_RULE,
-                          message:
-                            'Min 8 characters, with upper, lower, number & symbol',
-                        },
-                      })}
+                      className={`auth-input auth-input-has-toggle ${errors.password ? 'auth-input-error' : ''
+                        }`}
+                      {...passwordField}
+                      onFocus={() => setShowPwdRules(true)}
+                      onBlur={(e) => {
+                        passwordField.onBlur(e);
+                        setShowPwdRules(false);
+                      }}
                     />
                     <button
                       type="button"
@@ -464,6 +767,13 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   {errors.password && (
                     <p className="auth-error-text">{errors.password.message}</p>
                   )}
+
+                  {/* Floating live-validation popover — appears on focus,
+                      tracks each keystroke, disappears on blur. Does not
+                      push the confirm-password field below it. */}
+                  <AnimatePresence>
+                    {showPwdRules && <PasswordChecklist password={password} />}
+                  </AnimatePresence>
                 </div>
 
                 <div className="auth-field">
@@ -479,9 +789,8 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                       type={showConfirmPassword ? 'text' : 'password'}
                       autoComplete="new-password"
                       placeholder="Re-enter your password"
-                      className={`auth-input auth-input-has-toggle ${
-                        errors.confirmPassword ? 'auth-input-error' : ''
-                      }`}
+                      className={`auth-input auth-input-has-toggle ${errors.confirmPassword ? 'auth-input-error' : ''
+                        }`}
                       {...register('confirmPassword', {
                         required: 'Please confirm your password',
                         validate: (value) =>
@@ -590,7 +899,7 @@ const Auth = () => {
       <div className="auth-bg-circle auth-bg-circle-three" />
 
       <div className="auth-center">
-        
+
 
         <motion.div
           className="auth-card"
@@ -601,12 +910,11 @@ const Auth = () => {
             <AnimatePresence mode="wait" custom={mode} initial={false}>
               <motion.div
                 key={mode}
-                custom={mode}
-                variants={slideVariants}
+                variants={flipVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
                 {mode === 'login' ? (
                   <LoginPanel onSwitchToSignup={switchToSignup} />
@@ -617,10 +925,6 @@ const Auth = () => {
             </AnimatePresence>
           </motion.div>
         </motion.div>
-
-        <p className="auth-footnote">
-          Authorized personnel only · Protected under IT Act, 2000
-        </p>
       </div>
     </div>
   );

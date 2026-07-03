@@ -1,0 +1,19 @@
+.cw-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #003366;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  z-index: 1400;
+  font-weight: 600;
+  opacity: 0;
+  animation: cw-toast-in 220ms ease forwards;
+}
+@keyframes cw-toast-in {
+  from { transform: translateX(-50%) translateY(-6px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}

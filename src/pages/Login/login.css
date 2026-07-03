@@ -2,41 +2,92 @@
    AUTH PAGE — WWRAMS (C-DAC)
    Single card, Login + 2-Step Signup Wizard
    Plain CSS only
+   Refactored: variables, deduped values, organized sections
    ============================================================ */
 
+/* ------------------------------------------------------------
+   1. VARIABLES
+   ------------------------------------------------------------ */
 :root {
+  /* Brand colors */
   --auth-primary: #0b3d91;
   --auth-primary-dark: #092c6b;
   --auth-accent: #ff9933;
+
+  /* Primary tints (alpha variants reused across backgrounds / focus rings) */
+  --auth-primary-a04: rgba(11, 61, 145, 0.04);
+  --auth-primary-a05: rgba(11, 61, 145, 0.05);
+  --auth-primary-a08: rgba(11, 61, 145, 0.08);
+  --auth-primary-a10: rgba(11, 61, 145, 0.1);
+  --auth-primary-a14: rgba(11, 61, 145, 0.14); /* focus ring + secondary button hover */
+  --auth-primary-a18: rgba(11, 61, 145, 0.18);
+  --auth-primary-a20: rgba(11, 61, 145, 0.2);
+
+  /* Borders */
   --auth-border: #d9e2ec;
   --auth-border-hover: #afc2de;
+
+  /* Text */
   --auth-text-heading: #0b2a5b;
   --auth-text-body: #1f2a3d;
   --auth-text-muted: #5b6b82;
-  --auth-text-placeholder: #9aa6b8;
+  --auth-text-placeholder: #7e8ca3;
+  --auth-text-checkbox: #3d4a5c;
+  --auth-icon-muted: #8b96a8;
+
+  /* Status colors */
   --auth-error: #e0352b;
   --auth-error-bg: #fdecec;
   --auth-error-border: #f5c2be;
+  --auth-success-text: #15803d;
+  --auth-success-icon: #16a34a;
 
-  --auth-radius-lg: 28px;
-  --auth-radius-md: 14px;
+  /* Radii */
+  --auth-radius-lg: 32px;
+  --auth-radius-md: 16px;
   --auth-radius-sm: 10px;
+  --auth-radius-input-signup: 12px;
 
-  --auth-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05),
-    0 32px 70px -18px rgba(11, 61, 145, 0.28);
-  --auth-shadow-button: 0 10px 24px -6px rgba(11, 61, 145, 0.5);
-  --auth-shadow-button-hover: 0 16px 32px -8px rgba(11, 61, 145, 0.6);
+  /* Control sizing (shared by inputs / icons / toggles) */
+  --auth-control-size: 48px;       /* input height, icon width, toggle width */
+  --auth-control-size-signup: 40px; /* signup icon/toggle width */
+  --auth-input-height-signup: 43px;
+  --auth-captcha-size: 48px;        /* captcha question + refresh height — matches input height */
 
+  /* Buttons */
+  --auth-button-height: 54px;
+  --auth-button-height-signup: 55px;
+
+  /* Spacing */
+  --auth-field-spacing: 1.375rem;
+  --auth-field-spacing-signup: 0.8rem;
+  --auth-row-gap-signup: 0.9rem;
+  --auth-row-spacing-signup: 0.85rem;
+
+  /* Shadows */
+  --auth-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 12px 28px -8px rgba(11, 61, 145, 0.14),
+    0 40px 80px -20px rgba(11, 61, 145, 0.28);
+  --auth-shadow-button: 0 1px 1px rgba(11, 61, 145, 0.08) inset,
+    0 12px 24px -6px rgba(11, 61, 145, 0.45);
+  --auth-shadow-button-hover: 0 1px 1px rgba(11, 61, 145, 0.08) inset,
+    0 18px 34px -8px rgba(11, 61, 145, 0.55);
+
+  /* Motion */
   --auth-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --auth-transition-fast: 0.18s var(--auth-ease);
+  --auth-transition-base: 0.25s var(--auth-ease);
 }
 
+/* ------------------------------------------------------------
+   2. RESET
+   ------------------------------------------------------------ */
 * {
   box-sizing: border-box;
 }
 
 /* ------------------------------------------------------------
-   PAGE SHELL — full viewport, no scroll on desktop, centered
+   3. LAYOUT — page shell & center column
    ------------------------------------------------------------ */
 .auth-page {
   position: relative;
@@ -50,8 +101,25 @@
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
+.auth-center {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+/* Signup uses a wider column to fit the two-step wizard */
+.auth-page-signup .auth-center {
+  max-width: 880px;
+  padding: 0.95rem 1.25rem;
+}
+
 /* ------------------------------------------------------------
-   ANIMATED BACKGROUND CIRCLES
+   4. BACKGROUND — animated blurred circles
    ------------------------------------------------------------ */
 .auth-bg-circle {
   position: absolute;
@@ -65,7 +133,7 @@
   right: -6rem;
   width: 28rem;
   height: 28rem;
-  background: rgba(11, 61, 145, 0.18);
+  background: var(--auth-primary-a18);
   animation: auth-float-a 10s ease-in-out infinite;
 }
 
@@ -83,56 +151,29 @@
   left: 50%;
   width: 20rem;
   height: 20rem;
-  background: rgba(11, 61, 145, 0.1);
+  background: var(--auth-primary-a10);
   transform: translate(-50%, -50%);
   animation: auth-float-c 14s ease-in-out infinite 0.5s;
 }
 
 @keyframes auth-float-a {
-  0%,
-  100% {
-    transform: scale(1) translate(0, 0);
-  }
-  50% {
-    transform: scale(1.15) translate(-1.5rem, 1.5rem);
-  }
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.15) translate(-1.5rem, 1.5rem); }
 }
 
 @keyframes auth-float-b {
-  0%,
-  100% {
-    transform: scale(1) translate(0, 0);
-  }
-  50% {
-    transform: scale(1.1) translate(1.5rem, -1rem);
-  }
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.1) translate(1.5rem, -1rem); }
 }
 
 @keyframes auth-float-c {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.2);
-  }
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.2); }
 }
 
 /* ------------------------------------------------------------
-   CENTER COLUMN
+   5. CARD — glassmorphism card + brand mark
    ------------------------------------------------------------ */
-.auth-center {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.5rem;
-}
-
-/* Brand mark above the card */
 .auth-brand {
   display: flex;
   align-items: center;
@@ -177,9 +218,6 @@
   color: var(--auth-primary);
 }
 
-/* ------------------------------------------------------------
-   GLASSMORPHISM CARD
-   ------------------------------------------------------------ */
 .auth-card {
   width: 100%;
   border-radius: var(--auth-radius-lg);
@@ -188,37 +226,53 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--auth-shadow-card);
-  padding: 40px;
+  padding: 42px 44px;
   overflow: hidden;
 }
 
 .form-container {
   overflow: hidden;
+  perspective: 1400px;
 }
 
-/* Header */
+/* Signup — balanced layout (normal 100% zoom) */
+.auth-card-signup {
+  width: min(100%, 780px);
+  padding: 30px 34px;
+  min-height: unset;
+  max-height: calc(100vh - 2.5rem);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* ------------------------------------------------------------
+   6. HEADER — title, subtitle, step progress dots
+   ------------------------------------------------------------ */
 .auth-header {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.75rem;
+  gap: 0.625rem;
+  margin-bottom: 2rem;
 }
 
 .auth-title {
   margin: 0;
-  font-size: 1.625rem;
+  font-size: 1.875rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: var(--auth-text-heading);
 }
 
 .auth-subtitle {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.5;
   color: var(--auth-text-muted);
 }
 
-/* Step progress dots (signup only) */
 .auth-progress {
   display: flex;
   align-items: center;
@@ -246,7 +300,27 @@
   border-radius: 2px;
 }
 
-/* Form */
+/* Signup header is slightly more compact */
+.signup-panel .auth-header {
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.signup-panel .auth-title {
+  font-size: 1.52rem;
+}
+
+.signup-panel .auth-subtitle {
+  font-size: 0.86rem;
+}
+
+.signup-panel .auth-progress {
+  margin-top: 0.35rem;
+}
+
+/* ------------------------------------------------------------
+   7. FORMS — field/row layout, labels, step wizard
+   ------------------------------------------------------------ */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -255,7 +329,7 @@
 .auth-row {
   display: flex;
   flex-direction: row;
-  gap: 1.25rem;
+  gap: var(--auth-field-spacing);
 }
 
 .auth-row .auth-field {
@@ -266,7 +340,7 @@
 .auth-field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--auth-field-spacing);
 }
 
 .auth-field:last-of-type {
@@ -277,14 +351,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.4375rem;
+  margin-bottom: 0.5625rem;
 }
 
 .auth-label {
   display: block;
-  margin-bottom: 0.4375rem;
-  font-size: 0.78125rem;
+  margin-bottom: 0.5625rem;
+  font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1.3;
   letter-spacing: 0.01em;
   color: var(--auth-text-body);
 }
@@ -293,9 +368,23 @@
   margin-bottom: 0;
 }
 
+/* Forgot Password — deliberately quiet: smaller, lighter, never competes
+   with the field label it sits beside. */
+.auth-label-row .auth-link {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--auth-text-muted);
+}
+
+.auth-label-row .auth-link:hover {
+  color: var(--auth-primary);
+  text-decoration-color: currentColor;
+}
+
 /* Signup step wrapper (holds the animated step children) */
 .signup-step-container {
   position: relative;
+  min-height: 0;
 }
 
 .signup-step {
@@ -304,7 +393,7 @@
 }
 
 .signup-step > .auth-row {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--auth-field-spacing);
 }
 
 .signup-step-actions {
@@ -318,7 +407,32 @@
   margin-top: 0;
 }
 
-/* Inputs — icon centered via flexbox */
+/* Signup field/row spacing is more compact */
+.signup-panel .auth-field {
+  margin-bottom: var(--auth-field-spacing-signup);
+}
+
+.signup-panel .auth-label {
+  margin-bottom: 0.3rem;
+  font-size: 0.77rem;
+}
+
+.signup-panel .auth-row {
+  gap: var(--auth-row-gap-signup);
+}
+
+.signup-panel .signup-step > .auth-row {
+  margin-bottom: var(--auth-row-spacing-signup);
+}
+
+.signup-panel .signup-step-actions {
+  margin-top: 0.2rem;
+  gap: 0.65rem;
+}
+
+/* ------------------------------------------------------------
+   8. INPUTS — text fields, icons, select, password toggle
+   ------------------------------------------------------------ */
 .auth-input-wrapper {
   position: relative;
   display: flex;
@@ -326,12 +440,16 @@
   width: 100%;
 }
 
+.auth-input-wrapper-floating {
+  align-items: stretch;
+}
+
 .auth-input-icon {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 44px;
+  width: var(--auth-control-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -346,32 +464,42 @@
 
 .auth-input {
   width: 100%;
-  height: 48px;
+  height: var(--auth-control-size);
   border-radius: var(--auth-radius-md);
   border: 1px solid var(--auth-border);
   background: rgba(255, 255, 255, 0.85);
-  padding: 0 1rem 0 44px;
-  font-size: 0.90625rem;
-  line-height: 48px;
+  padding: 0 1.125rem 0 var(--auth-control-size);
+  font-size: 1rem;
+  line-height: var(--auth-control-size);
   color: var(--auth-text-body);
   outline: none;
-  transition: border-color var(--auth-transition-fast),
-    background var(--auth-transition-fast),
-    box-shadow var(--auth-transition-fast);
+  transition: border-color var(--auth-transition-base),
+    background var(--auth-transition-base),
+    box-shadow var(--auth-transition-base);
+}
+
+.auth-input-floating {
+  padding-top: 1.05rem;
+  padding-bottom: 0.55rem;
 }
 
 .auth-input::placeholder {
   color: var(--auth-text-placeholder);
 }
 
+.auth-input-floating::placeholder {
+  color: transparent;
+}
+
 .auth-input:hover {
   border-color: var(--auth-border-hover);
+  background: #ffffff;
 }
 
 .auth-input:focus {
   border-color: var(--auth-primary);
   background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(11, 61, 145, 0.14);
+  box-shadow: 0 0 0 4px var(--auth-primary-a14);
 }
 
 .auth-input-error {
@@ -379,7 +507,53 @@
 }
 
 .auth-input-has-toggle {
-  padding-right: 44px;
+  padding-right: var(--auth-control-size);
+}
+
+.auth-floating-label {
+  position: absolute;
+  left: var(--auth-control-size);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 0.25rem;
+  background: transparent;
+  color: var(--auth-text-placeholder);
+  font-size: 0.98rem;
+  line-height: 1;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform var(--auth-transition-fast),
+    color var(--auth-transition-fast),
+    top var(--auth-transition-fast),
+    font-size var(--auth-transition-fast),
+    background-color var(--auth-transition-fast);
+}
+
+.auth-input-floating:focus + .auth-floating-label,
+.auth-input-floating:not(:placeholder-shown) + .auth-floating-label,
+.auth-input-floating:-webkit-autofill + .auth-floating-label {
+  top: 0;
+  transform: translateY(-50%) scale(0.82);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--auth-primary);
+}
+
+.auth-input-wrapper-floating:focus-within .auth-floating-label {
+  color: var(--auth-primary);
+}
+
+.auth-input-floating:focus + .auth-floating-label {
+  color: var(--auth-primary);
+}
+
+.auth-input-floating.auth-input-has-toggle + .auth-floating-label {
+  right: var(--auth-control-size);
+}
+
+.auth-input-floating.auth-input-has-toggle:not(:placeholder-shown) + .auth-floating-label,
+.auth-input-floating.auth-input-has-toggle:focus + .auth-floating-label,
+.auth-input-floating.auth-input-has-toggle:-webkit-autofill + .auth-floating-label {
+  right: var(--auth-control-size);
 }
 
 .auth-select {
@@ -391,20 +565,19 @@
   background-repeat: no-repeat;
 }
 
-/* Password toggle — centered via flexbox */
 .auth-toggle-visibility {
   position: absolute;
   right: 0;
   top: 0;
   bottom: 0;
-  width: 44px;
+  width: var(--auth-control-size);
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
   padding: 0;
-  color: #8b96a8;
+  color: var(--auth-icon-muted);
   cursor: pointer;
   transition: color var(--auth-transition-fast);
 }
@@ -413,28 +586,120 @@
   color: var(--auth-primary);
 }
 
-/* Errors */
-.auth-error-text {
-  margin: 0.4375rem 0 0;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--auth-error);
+/* Signup inputs/icons/toggles are scaled down to fit both steps on screen */
+.signup-panel .auth-input {
+  height: var(--auth-input-height-signup);
+  line-height: 43px;
+  font-size: 0.9rem;
+  border-radius: var(--auth-radius-input-signup);
+  padding-left: var(--auth-control-size-signup);
 }
 
-.auth-error-banner {
-  display: flex;
+.signup-panel .auth-input-icon {
+  width: var(--auth-control-size-signup);
+}
+
+.signup-panel .auth-input-has-toggle {
+  padding-right: var(--auth-control-size-signup);
+}
+
+.signup-panel .auth-toggle-visibility {
+  width: var(--auth-control-size-signup);
+}
+
+/* ------------------------------------------------------------
+   9. BUTTONS & LINKS
+   ------------------------------------------------------------ */
+.auth-link {
+  display: inline-flex;
   align-items: center;
-  border-radius: var(--auth-radius-sm);
-  border: 1px solid var(--auth-error-border);
-  background: var(--auth-error-bg);
-  padding: 0.75rem 0.875rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--auth-error);
-  margin-bottom: 1.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--auth-primary);
+  cursor: pointer;
+  transition: color var(--auth-transition-fast);
 }
 
-/* Checkbox */
+.auth-link:hover {
+  color: var(--auth-accent);
+  text-decoration: underline;
+}
+
+.auth-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--auth-button-height);
+  border: none;
+  border-radius: var(--auth-radius-md);
+  background: var(--auth-primary);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: var(--auth-shadow-button);
+  transition: background var(--auth-transition-base),
+    box-shadow var(--auth-transition-base), transform var(--auth-transition-base);
+  margin-top: 0.5rem;
+}
+
+.auth-button:hover:not(:disabled) {
+  background: var(--auth-primary-dark);
+  box-shadow: var(--auth-shadow-button-hover);
+  transform: translateY(-2px);
+}
+
+.auth-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  transition-duration: 0.1s;
+}
+
+.auth-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auth-button:disabled:hover {
+  transform: none;
+}
+
+.auth-button-secondary {
+  background: var(--auth-primary-a08);
+  color: var(--auth-primary);
+  box-shadow: none;
+}
+
+.auth-button-secondary:hover:not(:disabled) {
+  background: var(--auth-primary-a14);
+  box-shadow: none;
+  transform: translateY(-2px);
+}
+
+.auth-spinner {
+  animation: auth-spin 0.8s linear infinite;
+  display: flex;
+}
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+.signup-panel .auth-button {
+  height: var(--auth-button-height-signup);
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+}
+
+/* ------------------------------------------------------------
+   10. CHECKBOX
+   ------------------------------------------------------------ */
 .auth-checkbox-row {
   display: flex;
   flex-direction: row;
@@ -442,9 +707,10 @@
   gap: 0.625rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #3d4a5c;
+  color: var(--auth-text-checkbox);
   cursor: pointer;
   user-select: none;
+  margin-bottom: var(--auth-field-spacing);
 }
 
 .auth-checkbox-row-terms {
@@ -485,7 +751,7 @@
 }
 
 .auth-checkbox-input:focus {
-  box-shadow: 0 0 0 4px rgba(11, 61, 145, 0.2);
+  box-shadow: 0 0 0 4px var(--auth-primary-a20);
 }
 
 .auth-checkbox-tick {
@@ -512,122 +778,298 @@
   font-weight: 600;
 }
 
-/* Links */
-.auth-link {
-  display: inline-flex;
+.signup-panel .auth-checkbox-row {
+  font-size: 0.79rem;
+  gap: 0.55rem;
+  margin-bottom: var(--auth-field-spacing-signup);
+}
+
+.signup-panel .auth-checkbox-label {
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------
+   11. CAPTCHA
+   ------------------------------------------------------------ */
+.auth-captcha-row {
+  display: flex;
   align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: inherit;
-  font-weight: 600;
-  color: var(--auth-primary);
+  gap: 0.875rem;
+}
+
+.auth-captcha-question {
+  display: flex;
+  align-items: center;
+  height: var(--auth-captcha-size);
+  padding: 0 1rem;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  background: var(--auth-primary-a05);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.auth-captcha-expr {
+  font-family: 'Courier New', monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--auth-text-heading);
+  user-select: none;
+}
+
+.auth-captcha-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--auth-control-size);
+  height: var(--auth-captcha-size);
+  flex-shrink: 0;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  background: #ffffff;
+  color: var(--auth-text-muted);
   cursor: pointer;
+  transition: color var(--auth-transition-fast),
+    border-color var(--auth-transition-fast), background var(--auth-transition-fast);
+}
+
+.auth-captcha-refresh:hover {
+  color: var(--auth-primary);
+  border-color: var(--auth-border-hover);
+  background: var(--auth-primary-a04);
+}
+
+.auth-captcha-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-captcha-input {
+  padding-left: 1rem;
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+.auth-captcha-canvas-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--auth-radius-md);
+  border: 1px solid var(--auth-border);
+  overflow: hidden;
+  line-height: 0;
+  background: #f5f5f5;
+}
+
+.auth-captcha-canvas {
+  display: block;
+}
+
+.signup-panel .auth-captcha-row {
+  gap: 0.55rem;
+}
+
+.signup-panel .auth-captcha-refresh {
+  width: var(--auth-control-size-signup);
+  height: 42px;
+}
+
+/* ------------------------------------------------------------
+   12. PASSWORD RULES — live floating checklist (signup step 2)
+   ------------------------------------------------------------ */
+
+/* Field wrapper that anchors the floating popover */
+.auth-field--password {
+  position: relative;
+}
+
+/* Floating card — shown on focus, hidden on blur, no layout push */
+.auth-pwd-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 100%;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--auth-radius-md);
+  box-shadow: 0 16px 32px -10px var(--auth-primary-a20),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  padding: 0.75rem 1rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Little caret pointing up at the input, like a speech bubble */
+.auth-pwd-popover::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 28px;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  border-left: 1px solid var(--auth-border);
+  border-top: 1px solid var(--auth-border);
+  border-radius: 2px 0 0 0;
+  transform: rotate(45deg);
+}
+
+.auth-pwd-rules {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-pwd-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--auth-text-muted);
   transition: color var(--auth-transition-fast);
 }
 
-.auth-link:hover {
-  color: var(--auth-accent);
-  text-decoration: underline;
+.auth-pwd-rule svg {
+  flex-shrink: 0;
+  color: var(--auth-text-placeholder);
+  transition: color var(--auth-transition-fast);
 }
 
-/* Buttons */
-.auth-button {
+.auth-pwd-rule-ok {
+  color: var(--auth-success-text);
+}
+
+.auth-pwd-rule-ok svg {
+  color: var(--auth-success-icon);
+}
+
+.signup-panel .auth-pwd-rules {
+  margin: 0.55rem 0 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 0.8rem;
+}
+
+/* Inside the floating popover the list sits flush against the padding,
+   so it doesn't need the inline layout's top margin. Extra class in the
+   chain gives this the specificity to win over the rule above. */
+.signup-panel .auth-pwd-popover .auth-pwd-rules {
+  margin: 0;
+}
+
+.signup-panel .auth-pwd-rule {
+  font-size: 0.72rem;
+  gap: 0.4rem;
+}
+
+.signup-panel .auth-pwd-rule svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ------------------------------------------------------------
+   13. FOOTER — errors, switch text, footnote
+   ------------------------------------------------------------ */
+.auth-error-text {
+  margin: 0.4375rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--auth-error);
+}
+
+.auth-error-banner {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  height: 50px;
-  border: none;
-  border-radius: var(--auth-radius-md);
-  background: var(--auth-primary);
-  color: #ffffff;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--auth-shadow-button);
-  transition: background var(--auth-transition-fast),
-    box-shadow var(--auth-transition-fast), transform var(--auth-transition-fast);
-  margin-top: 0.5rem;
+  border-radius: var(--auth-radius-sm);
+  border: 1px solid var(--auth-error-border);
+  background: var(--auth-error-bg);
+  padding: 0.75rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--auth-error);
+  margin-bottom: var(--auth-field-spacing);
 }
 
-.auth-button:hover:not(:disabled) {
-  background: var(--auth-primary-dark);
-  box-shadow: var(--auth-shadow-button-hover);
-  transform: translateY(-2px);
-}
-
-.auth-button:active:not(:disabled) {
-  transform: translateY(0) scale(0.99);
-}
-
-.auth-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.auth-button:disabled:hover {
-  transform: none;
-}
-
-.auth-button-secondary {
-  background: rgba(11, 61, 145, 0.08);
-  color: var(--auth-primary);
-  box-shadow: none;
-}
-
-.auth-button-secondary:hover:not(:disabled) {
-  background: rgba(11, 61, 145, 0.14);
-  box-shadow: none;
-  transform: translateY(-2px);
-}
-
-.auth-spinner {
-  animation: auth-spin 0.8s linear infinite;
-  display: flex;
-}
-
-@keyframes auth-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Footer text */
 .auth-switch-text {
-  margin: 1.5rem 0 0;
+  margin: 1.75rem 0 0;
   text-align: center;
   font-size: 0.84375rem;
   color: var(--auth-text-muted);
 }
 
-.auth-footnote {
-  margin-top: 1.5rem;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--auth-text-muted);
+.signup-panel .auth-switch-text {
+  margin-top: 0.75rem;
+  font-size: 0.84rem;
+}
+
+.signup-panel .auth-error-text {
+  margin-top: 0.25rem;
+  font-size: 0.73rem;
 }
 
 /* ------------------------------------------------------------
-   RESPONSIVE
+   14. RESPONSIVE
    ------------------------------------------------------------ */
+@media (max-height: 760px) {
+  .auth-page-signup .auth-center {
+    padding: 0.35rem 1rem;
+  }
+
+  .auth-card-signup {
+    padding: 16px 20px;
+  }
+
+  .signup-panel .auth-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .signup-panel .auth-title {
+    font-size: 1.5rem;
+  }
+
+  .signup-panel .auth-field {
+    margin-bottom: 0.4rem;
+  }
+
+  .signup-panel .auth-input {
+    height: 55px;
+    line-height: 34px;
+  }
+
+  .signup-panel .auth-captcha-refresh {
+    height: 44px;
+    width: 34px;
+  }
+
+  .signup-panel .auth-button {
+    height: 44px;
+  }
+
+  .signup-panel .auth-switch-text {
+    margin-top: 0.45rem;
+  }
+}
+
 @media (max-width: 640px) {
   .auth-page {
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
-    padding: 2rem 0;
+    padding: 1.5rem 0;
   }
 
   .auth-card {
-    padding: 24px;
-    border-radius: 22px;
+    padding: 30px 26px;
+    border-radius: 24px;
   }
 
   .auth-title {
-    font-size: 1.375rem;
+    font-size: 1.5rem;
   }
 
   .auth-row {
@@ -635,8 +1077,24 @@
     gap: 0;
   }
 
+  .signup-panel .auth-pwd-rules {
+    grid-template-columns: 1fr;
+  }
+
   .signup-step-actions {
     flex-direction: column;
+  }
+
+  .auth-pwd-popover {
+    left: 50%;
+    width: calc(100vw - 3.5rem);
+    max-width: 320px;
+    transform: translateX(-50%);
+  }
+
+  .auth-pwd-popover::before {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
   }
 }
 

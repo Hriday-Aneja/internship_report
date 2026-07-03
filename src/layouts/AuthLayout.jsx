@@ -1,7 +1,9 @@
-function AuthLayout({ children }) {
+import { Outlet } from "react-router-dom";
+
+function AuthLayout() {
   return (
     <div className="auth-layout">
-      {children}
+      <Outlet />
     </div>
   );
 }

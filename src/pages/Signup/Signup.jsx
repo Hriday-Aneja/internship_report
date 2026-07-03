@@ -1,5 +1,7 @@
+import Auth from "../Login/Login";
+
 function Signup() {
-  return <h1>Signup Page</h1>;
+  return <Auth initialMode="signup" />;
 }
 
-export default Signup;  
+export default Signup;
