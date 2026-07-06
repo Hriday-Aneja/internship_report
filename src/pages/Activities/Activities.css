@@ -1,0 +1,354 @@
+/* ============================================================
+   ACTIVITIES PAGE — WWRAMS
+   Page-specific styles only. Shared page-shell-* styles live in
+   src/components/PageShell/PageShell.css.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   PAGE HEADER WITH ACTION BUTTON (self-rendered, PageShell untouched)
+   ------------------------------------------------------------ */
+.activities-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------
+   KPI ROW — always one line, colored accents per status
+   ------------------------------------------------------------ */
+.activities-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.activities-kpi {
+  position: relative;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid #dbe7f4;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activities-kpi::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+.activities-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(23, 56, 108, 0.1);
+}
+
+.activities-kpi span {
+  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.activities-kpi strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.kpi-total::before { background: #17386c; }
+.kpi-total strong { color: #17386c; }
+
+.kpi-completed::before { background: #16a34a; }
+.kpi-completed strong { color: #15803d; }
+
+.kpi-progress::before { background: #2563eb; }
+.kpi-progress strong { color: #1d4ed8; }
+
+.kpi-pending::before { background: #f59e0b; }
+.kpi-pending strong { color: #b45309; }
+
+/* ------------------------------------------------------------
+   "ADD NEW ACTIVITY" BUTTON (lives in the page header)
+   ------------------------------------------------------------ */
+.activities-add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  padding: 13px 28px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #17386c 0%, #2563eb 100%);
+  box-shadow: 0 12px 24px rgba(23, 56, 108, 0.26);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activities-add-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(23, 56, 108, 0.32);
+}
+
+.activities-add-button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ------------------------------------------------------------
+   DRAFT ENTRY CARDS (appear after modal save)
+   ------------------------------------------------------------ */
+.activities-drafts {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.activities-draft-card {
+  border: 1px solid #dbe7f4;
+  border-radius: 14px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 39, 71, 0.06);
+}
+
+.activities-draft-table td {
+  color: #0f2747;
+  font-weight: 500;
+}
+
+.activities-draft-description {
+  margin: 12px 2px 0;
+  color: #4b5563;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.activities-draft-description svg {
+  color: #9aa6b8;
+  margin-right: 6px;
+}
+
+.activities-draft-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.activities-draft-actions .page-shell-button,
+.activities-modal-footer .page-shell-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ------------------------------------------------------------
+   VERTICAL MODAL
+   ------------------------------------------------------------ */
+.activities-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 80;
+}
+
+.activities-modal {
+  width: min(480px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #dbe7f4;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.activities-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e5ebf5;
+}
+
+.activities-modal-header h3 {
+  margin: 0;
+  color: #0f2747;
+  font-size: 1.15rem;
+}
+
+.activities-modal-close {
+  border: none;
+  background: #eef3fb;
+  color: #17386c;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.activities-modal-close:hover {
+  background: #dbe7f4;
+}
+
+.activities-modal-body {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activities-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.activities-field span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1f2a3d;
+}
+
+/* Signup-style input: icon inside a rounded field */
+.activities-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.activities-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #9aa6b8;
+  font-size: 0.9rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.activities-input-wrap:focus-within .activities-input-icon {
+  color: #2563eb;
+}
+
+.activities-field input,
+.activities-field select,
+.activities-field textarea {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 40px;
+  border: 1px solid #d9e2ec;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f2747;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activities-field textarea {
+  height: auto;
+  padding: 10px 12px 10px 40px;
+  resize: none;
+  line-height: 1.4;
+}
+
+.activities-textarea-wrap {
+  align-items: flex-start;
+}
+
+.activities-textarea-wrap .activities-input-icon {
+  top: 13px;
+}
+
+.activities-field input:hover,
+.activities-field select:hover,
+.activities-field textarea:hover {
+  border-color: #afc2de;
+}
+
+.activities-field input:focus,
+.activities-field select:focus,
+.activities-field textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Compact 2x2 grid for the small fields */
+.activities-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.activities-form-grid .activities-field input,
+.activities-form-grid .activities-field select {
+  height: 40px;
+  font-size: 13.5px;
+}
+
+.activities-form-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdecec;
+  border: 1px solid #f5c2be;
+  color: #dc3545;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Light greyish footer */
+.activities-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  border-radius: 0 0 18px 18px;
+}
+
+/* ------------------------------------------------------------
+   RESPONSIVE
+   ------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .activities-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .activities-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .activities-draft-actions {
+    flex-direction: column;
+  }
+
+  .activities-draft-actions .page-shell-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
