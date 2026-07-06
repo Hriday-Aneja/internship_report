@@ -21,7 +21,6 @@ import {
   X,
 } from 'lucide-react';
 import './login.css';
-import Loading from '../../components/Loading/Loading';
 import Toast from '../../components/Toast/Toast';
 
 const PASSWORD_CHECKS = [
@@ -219,7 +218,6 @@ const LoginPanel = ({ onSwitchToSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [showLoading, setShowLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
@@ -281,13 +279,12 @@ const LoginPanel = ({ onSwitchToSignup }) => {
       // Store current user info in localStorage
       localStorage.setItem('currentUser', JSON.stringify(matchedUser));
       setIsSubmitting(false);
-      // show toast + loading screen then navigate
+      // show success toast then navigate
       setToastMessage('Login Successful!');
       setShowToast(true);
-      setShowLoading(true);
       setTimeout(() => {
         navigate('/dashboard');
-      }, 1400);
+      }, 900);
     } catch (e) {
       setAuthError('Failed to sign in. Please try again.');
       setIsSubmitting(false);
@@ -304,7 +301,6 @@ const LoginPanel = ({ onSwitchToSignup }) => {
   return (
     <div className="login-panel">
       {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
-      {showLoading && <Loading />}
       <div className="auth-header">
         <h2 className="auth-title">Welcome back</h2>
         <p className="auth-subtitle">
@@ -495,11 +491,12 @@ const SignupPanel = ({ onSwitchToLogin }) => {
       const userExists = existingUsers.some(
         (u) =>
           u.employeeId.toLowerCase() === data.employeeId.toLowerCase() ||
-          u.email.toLowerCase() === data.email.toLowerCase()
+          u.email.toLowerCase() === data.email.toLowerCase() ||
+          (u.phoneNumber && u.phoneNumber === data.phoneNumber)
       );
 
       if (userExists) {
-        setSubmitError('An account with this Employee ID or Email already exists.');
+        setSubmitError('An account with this Employee ID, Email, or Phone Number already exists.');
         setIsSubmitting(false);
         return;
       }
@@ -509,6 +506,7 @@ const SignupPanel = ({ onSwitchToLogin }) => {
         employeeId: data.employeeId,
         fullName: data.fullName,
         email: data.email,
+        phoneNumber: data.phoneNumber,
         department: data.department,
         designation: data.designation,
         password: data.password,
@@ -649,62 +647,36 @@ const SignupPanel = ({ onSwitchToLogin }) => {
                   )}
                 </div>
 
-                <div className="auth-row">
-                  <div className="auth-field">
-                    <label htmlFor="department" className="auth-label">
-                      Department
-                    </label>
-                    <div className="auth-input-wrapper">
-                      <span className="auth-input-icon">
-                        <Building2 size={18} strokeWidth={1.75} />
-                      </span>
-                      <select
-                        id="department"
-                        defaultValue=""
-                        className={`auth-input auth-select ${errors.department ? 'auth-input-error' : ''
-                          }`}
-                        {...register('department', {
-                          required: 'Department is required',
-                        })}
-                      >
-                        <option value="" disabled>
-                          Select department
-                        </option>
-                        {DEPARTMENTS.map((dept) => (
-                          <option key={dept} value={dept}>
-                            {dept}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {errors.department && (
-                      <p className="auth-error-text">{errors.department.message}</p>
-                    )}
+                <div className="auth-field">
+                  <label htmlFor="phoneNumber" className="auth-label">
+                    Phone Number
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <span className="auth-input-icon">
+                      <Phone size={18} strokeWidth={1.75} />
+                    </span>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      autoComplete="tel"
+                      inputMode="numeric"
+                      placeholder="10-digit mobile number"
+                      className={`auth-input ${errors.phoneNumber ? 'auth-input-error' : ''}`}
+                      {...register('phoneNumber', {
+                        required: 'Phone number is required',
+                        pattern: {
+                          value: /^(?:\+?91[\s-]?)?[6-9]\d{9}$/,
+                          message: 'Enter a valid phone number',
+                        },
+                      })}
+                    />
                   </div>
-
-                  <div className="auth-field">
-                    <label htmlFor="designation" className="auth-label">
-                      Designation
-                    </label>
-                    <div className="auth-input-wrapper">
-                      <span className="auth-input-icon">
-                        <BadgeCheck size={18} strokeWidth={1.75} />
-                      </span>
-                      <input
-                        id="designation"
-                        type="text"
-                        placeholder="e.g. Project Engineer"
-                        className={`auth-input ${errors.designation ? 'auth-input-error' : ''}`}
-                        {...register('designation', {
-                          required: 'Designation is required',
-                        })}
-                      />
-                    </div>
-                    {errors.designation && (
-                      <p className="auth-error-text">{errors.designation.message}</p>
-                    )}
-                  </div>
+                  {errors.phoneNumber && (
+                    <p className="auth-error-text">{errors.phoneNumber.message}</p>
+                  )}
                 </div>
+
+                
 
                 <CanvasCaptcha
                   register={register}

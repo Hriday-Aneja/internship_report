@@ -10,20 +10,7 @@ function TopSection() {
 
       </div>
 
-      <div className="profile-card">
-
-        <img
-          src="https://ui-avatars.com/api/?name=Divya+Azad&background=2563eb&color=fff"
-          alt="Profile"
-        />
-
-        <h3>Divya Azad</h3>
-
-        <p>Frontend Intern</p>
-
-        <span>Employee ID : EMP001</span>
-
-      </div>
+      
 
     </div>
   );

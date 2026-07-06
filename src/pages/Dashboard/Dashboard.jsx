@@ -3,6 +3,7 @@ import TopSection from "./components/TopSection";
 import SummaryCards from "./components/SummaryCards";
 import QuickActions from "./components/QuickActions";
 import DashboardBottom from "./components/DashboardBottom";
+import WorkReportChart from "./components/WorkReportChart";
 
 function Dashboard() {
   return (
@@ -15,6 +16,8 @@ function Dashboard() {
       <QuickActions />
 
       <DashboardBottom />
+
+      <WorkReportChart />
 
     </div>
   );
