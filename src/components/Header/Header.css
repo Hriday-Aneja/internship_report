@@ -1,20 +1,37 @@
-/* ================= HEADER ================= */
+/* ============================
+   HEADER VARIABLES
+============================ */
+
+:root {
+    --header-height: 55px;
+    --primary-color: #0f2747;
+    --secondary-color: #64748b;
+    --border-color: #e5e7eb;
+    --bg-light: #f8fafc;
+    --hover-bg: #eef5ff;
+}
+
+/* ============================
+   HEADER
+============================ */
 
 .top-header {
-    height: 72px;
+    height: var(--header-height);
     background: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 28px;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
-/* ================= LEFT ================= */
+/* ============================
+   LEFT SECTION
+============================ */
 
 .left-area {
     display: flex;
@@ -28,71 +45,82 @@
     border: none;
     border-radius: 10px;
     background: #f3f6fb;
-    color: #0f2747;
-    cursor: pointer;
+    color: var(--primary-color);
     font-size: 18px;
-    transition: .3s;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .menu-btn:hover {
-    background: #0f2747;
-    color: white;
+    background: var(--primary-color);
+    color: #ffffff;
 }
+
+/* ============================
+   BRAND
+============================ */
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
 }
 
 .brand img {
-    width: 65px;
-    height: 50px;
+    width: 60px;
+    height: 48px;
+    object-fit: contain;
 }
 
 .brand h2 {
-    font-size: 20px;
-    color: #0f2747;
     margin: 0;
+    font-size: 20px;
     font-weight: 700;
+    color: var(--primary-color);
 }
 
 .brand p {
     margin: 3px 0 0;
-    color: #64748b;
     font-size: 13px;
+    color: var(--secondary-color);
 }
 
-/* ================= RIGHT ================= */
+/* ============================
+   RIGHT SECTION
+============================ */
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
 }
 
-/* ================= DATE ================= */
+/* ============================
+   DATE
+============================ */
 
 .date-box {
+    background: var(--bg-light);
+    padding: 8px 15px;
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    padding: 8px 15px;
-    border-radius: 10px;
-    background: #f8fafc;
 }
 
 .date-box strong {
-    color: #0f2747;
     font-size: 13px;
+    color: var(--primary-color);
 }
 
 .date-box span {
     font-size: 12px;
-    color: #64748b;
+    color: var(--secondary-color);
 }
 
-/* ================= NOTIFICATION ================= */
+/* ============================
+   NOTIFICATIONS
+============================ */
 
 .notif-wrap {
     position: relative;
@@ -104,16 +132,16 @@
     border: none;
     border-radius: 10px;
     background: #f3f6fb;
-    color: #0f2747;
-    cursor: pointer;
-    position: relative;
+    color: var(--primary-color);
     font-size: 18px;
-    transition: .3s;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .notif-btn:hover {
-    background: #0f2747;
-    color: white;
+    background: var(--primary-color);
+    color: #ffffff;
 }
 
 .notif-badge {
@@ -122,48 +150,50 @@
     right: -4px;
     width: 18px;
     height: 18px;
-    border-radius: 50%;
     background: #ef4444;
-    color: white;
+    color: #ffffff;
+    border-radius: 50%;
     font-size: 10px;
     font-weight: 600;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
 }
 
 .notif-dropdown {
     position: absolute;
+    top: calc(var(--header-height) - 5px);
     right: 0;
-    top: 55px;
     width: 320px;
-    background: white;
+    background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,.12);
-    animation: fade .25s;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    animation: fade 0.25s ease;
 }
 
 .notif-header {
-    background: #0f2747;
-    color: white;
     padding: 14px 18px;
+    background: var(--primary-color);
+    color: #ffffff;
     font-weight: 600;
 }
 
 .notif-item {
     padding: 14px 18px;
     font-size: 13px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #eeeeee;
     cursor: pointer;
-    transition: .3s;
+    transition: background 0.25s ease;
 }
 
 .notif-item:hover {
     background: #f5f9ff;
 }
 
-/* ================= PROFILE ================= */
+/* ============================
+   PROFILE
+============================ */
 
 .profile-menu {
     position: relative;
@@ -173,24 +203,24 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: white;
-    border: 1px solid #e5e7eb;
     padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     cursor: pointer;
-    transition: .3s;
+    transition: all 0.3s ease;
 }
 
 .profile-btn:hover {
-    background: #f8fafc;
+    background: var(--bg-light);
 }
 
 .avatar {
     width: 40px;
     height: 40px;
-    background: #0f2747;
-    color: white;
     border-radius: 50%;
+    background: var(--primary-color);
+    color: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -205,26 +235,26 @@
 
 .user-text strong {
     display: block;
-    color: #0f2747;
-    font-size: 14px;
+    font-size: 13px;
+    color: var(--primary-color);
 }
 
 .user-text p {
     margin: 2px 0 0;
-    color: #64748b;
     font-size: 12px;
+    color: var(--secondary-color);
 }
 
 .profile-dropdown {
     position: absolute;
-    top: 58px;
+    top: calc(var(--header-height) + 3px);
     right: 0;
     width: 260px;
-    background: white;
+    background: #ffffff;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,.15);
-    animation: fade .25s;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+    animation: fade 0.25s ease;
 }
 
 .profile-header {
@@ -236,23 +266,23 @@
 }
 
 .dropdown-item {
+    width: 100%;
+    border: none;
+    background: transparent;
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 14px 18px;
-    width: 100%;
-    border: none;
-    background: transparent;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: .25s;
     color: #334155;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    font: inherit;
 }
 
 .dropdown-item:hover {
-    background: #eef5ff;
-    color: #0f2747;
+    background: var(--hover-bg);
+    color: var(--primary-color);
 }
 
 .logout {
@@ -268,10 +298,11 @@
     border-top: 1px solid #ececec;
 }
 
-/* ================= ANIMATION ================= */
+/* ============================
+   ANIMATION
+============================ */
 
 @keyframes fade {
-
     from {
         opacity: 0;
         transform: translateY(-8px);
@@ -283,15 +314,18 @@
     }
 }
 
-/* ================= RESPONSIVE ================= */
+/* ============================
+   RESPONSIVE
+============================ */
 
-@media (max-width:900px) {
+@media (max-width: 900px) {
 
-    .brand p,
-    .user-text {
-        display: none;
+    .top-header {
+        padding: 0 16px;
     }
 
+    .brand p,
+    .user-text,
     .date-box {
         display: none;
     }
@@ -300,7 +334,7 @@
         font-size: 17px;
     }
 
-    .top-header {
-        padding: 0 15px;
+    .header-actions {
+        gap: 12px;
     }
 }

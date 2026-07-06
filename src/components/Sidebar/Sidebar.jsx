@@ -63,7 +63,7 @@ function Sidebar({ sidebarOpen }) {
         >
           <FaTasks className="sidebar-icon" />
           {sidebarOpen && (
-            <span className="sidebar-text">Current Activities</span>
+            <span className="sidebar-text"> Activities</span>
           )}
         </NavLink>
 

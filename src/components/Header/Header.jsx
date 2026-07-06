@@ -144,7 +144,7 @@ function Header({ toggleSidebar }) {
             <div className="avatar">P</div>
 
             <div className="user-text">
-              <strong>Paarth Sharma</strong>
+              <strong>Divya Azad</strong>
               <p>EMP001</p>
             </div>
 
@@ -161,7 +161,7 @@ function Header({ toggleSidebar }) {
                 </div>
 
                 <div>
-                  <strong>Paarth Sharma</strong>
+                  <strong>Divya Azad</strong>
                   <p>EMP001</p>
                 </div>
 
