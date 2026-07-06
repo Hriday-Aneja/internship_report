@@ -39,14 +39,19 @@ function QuickActions() {
       <div className="quick-actions">
         {actions.map(({ title, icon: Icon, path }) => (
           <button
-            key={title}
-            type="button"
-            className="action-card"
-            onClick={() => navigate(path)}
-          >
-            <Icon className="action-icon" />
-            <h3>{title}</h3>
-          </button>
+  key={title}
+  type="button"
+  className="action-card"
+  onClick={() => navigate(path)}
+>
+  <Icon className="action-icon" />
+
+  <h3>{title}</h3>
+
+  <span className="action-btn">
+    Go Now →
+  </span>
+</button>
         ))}
       </div>
     </>

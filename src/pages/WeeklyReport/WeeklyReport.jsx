@@ -1,300 +1,345 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./WeeklyReport.css";
+import {
+  DEFAULT_EMPLOYEE,
+  STORAGE_KEYS,
+  createId,
+  getStoredArray,
+  normalizeActivity,
+  removeStoredValue,
+  setStoredValue,
+} from "../../utils/constants";
+import { formatDate, formatDateRange } from "../../utils/formatDate";
+
+const createEmptyDraft = () => ({
+  fromDate: "",
+  toDate: "",
+  deliverables: "",
+  challenges: "",
+  nextWeekPlan: "",
+  remarks: "",
+});
+
+const loadReportDraft = () => {
+  if (typeof window === "undefined") {
+    return createEmptyDraft();
+  }
+
+  const savedDraft = window.localStorage.getItem(STORAGE_KEYS.reportDraft);
+
+  if (!savedDraft) {
+    return createEmptyDraft();
+  }
+
+  try {
+    const parsedDraft = JSON.parse(savedDraft);
+
+    return {
+      fromDate: parsedDraft.fromDate ?? "",
+      toDate: parsedDraft.toDate ?? "",
+      deliverables: parsedDraft.deliverables ?? "",
+      challenges: parsedDraft.challenges ?? "",
+      nextWeekPlan: parsedDraft.nextWeekPlan ?? "",
+      remarks: parsedDraft.remarks ?? "",
+    };
+  } catch {
+    return createEmptyDraft();
+  }
+};
 
 function WeeklyReport() {
+  const navigate = useNavigate();
+  const [reportDraft, setReportDraft] = useState(loadReportDraft);
+  const [activities, setActivities] = useState(() =>
+    getStoredArray(STORAGE_KEYS.activities)
+      .map(normalizeActivity)
+      .filter((activity) => activity.title.trim())
+  );
 
-  const [activities, setActivities] = useState([
-    {
-      activity: "",
-      hours: "",
-      status: "Completed",
-      isEditing: true,
-    },
-  ]);
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.reportDraft, reportDraft);
+  }, [reportDraft]);
 
-  const addActivity = () => {
-    setActivities([
-      ...activities,
-      {
-        activity: "",
-        hours: "",
-        status: "Completed",
-        isEditing: true,
+  useEffect(() => {
+    const syncActivities = () => {
+      setActivities(
+        getStoredArray(STORAGE_KEYS.activities)
+          .map(normalizeActivity)
+          .filter((activity) => activity.title.trim())
+      );
+    };
+
+    syncActivities();
+    window.addEventListener("storage", syncActivities);
+
+    return () => window.removeEventListener("storage", syncActivities);
+  }, []);
+
+  const completedCount = useMemo(
+    () => activities.filter((activity) => activity.title.trim() && activity.status === "Completed").length,
+    [activities]
+  );
+
+  const inProgressCount = useMemo(
+    () => activities.filter((activity) => activity.title.trim() && activity.status === "In Progress").length,
+    [activities]
+  );
+
+  const pendingCount = useMemo(
+    () => activities.filter((activity) => activity.title.trim() && activity.status === "Pending").length,
+    [activities]
+  );
+
+  const totalHoursWorked = useMemo(
+    () =>
+      activities.reduce((sum, activity) => {
+        const numericHours = Number(activity.hours);
+
+        return Number.isFinite(numericHours) ? sum + numericHours : sum;
+      }, 0),
+    [activities]
+  );
+
+  const updateDraftField = (field, value) => {
+    setReportDraft((currentDraft) => ({
+      ...currentDraft,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = () => {
+    const hasActivities = activities.length > 0;
+    const requiredFieldsFilled =
+      reportDraft.fromDate &&
+      reportDraft.toDate &&
+      reportDraft.deliverables.trim() &&
+      reportDraft.challenges.trim() &&
+      reportDraft.nextWeekPlan.trim();
+
+    if (!hasActivities) {
+      alert("Add activities first from the Activities page.");
+      return;
+    }
+
+    if (!requiredFieldsFilled) {
+      alert("Please fill the week duration, deliverables, challenges, and next week plan.");
+      return;
+    }
+
+    const submittedReport = {
+      reportId: createId("RPT"),
+      status: "Submitted",
+      employee: DEFAULT_EMPLOYEE,
+      weekDuration: {
+        fromDate: reportDraft.fromDate,
+        toDate: reportDraft.toDate,
+        label: formatDateRange(reportDraft.fromDate, reportDraft.toDate),
       },
-    ]);
+      activities: activities.map((activity) => {
+        const { isEditing, ...reportActivity } = activity;
+        return reportActivity;
+      }),
+      activityCount: activities.length,
+      totalHoursWorked,
+      deliverables: reportDraft.deliverables.trim(),
+      challenges: reportDraft.challenges.trim(),
+      nextWeekPlan: reportDraft.nextWeekPlan.trim(),
+      remarks: reportDraft.remarks.trim(),
+      submissionDateTime: new Date().toISOString(),
+    };
+
+    const storedReports = getStoredArray(STORAGE_KEYS.reports);
+    setStoredValue(STORAGE_KEYS.reports, [...storedReports, submittedReport]);
+    removeStoredValue(STORAGE_KEYS.reportDraft);
+
+    navigate("/reports", { replace: true });
   };
 
-  const handleChange = (index, field, value) => {
-
-    const updatedActivities = [...activities];
-
-    updatedActivities[index][field] = value;
-
-    setActivities(updatedActivities);
-
-  };
-
-  const deleteActivity = (index) => {
-
-    const updatedActivities = activities.filter(
-      (_, i) => i !== index
-    );
-
-    setActivities(updatedActivities);
-
-  };
-  const saveDraft = () => {
-  alert("Draft Saved Successfully!");
-};
-
-const submitReport = () => {
-  alert("Weekly Report Submitted Successfully!");
-};
-
-  const toggleEdit = (index) => {
-
-    const updatedActivities = [...activities];
-
-    updatedActivities[index].isEditing =
-      !updatedActivities[index].isEditing;
-
-    setActivities(updatedActivities);
-
-  };
+  const activitySummary = [
+    {
+      label: "Completed",
+      value: completedCount,
+      className: "completed-circle",
+    },
+    {
+      label: "In Progress",
+      value: inProgressCount,
+      className: "progress-circle",
+    },
+    {
+      label: "Pending",
+      value: pendingCount,
+      className: "pending-circle",
+    },
+  ];
 
   return (
-
     <div className="weekly-report">
+      <section className="report-hero">
+        <div>
+          <p className="eyebrow">Government portal workflow</p>
+          <h1>Create Weekly Report</h1>
+          <p className="subtitle">
+            Weekly activities are loaded automatically from local storage. Complete the report details and submit to
+            save it in your reports history.
+          </p>
+        </div>
 
-      <h1>Weekly Work Report</h1>
+        <div className="hero-stats">
+          {activitySummary.map((item) => (
+            <div key={item.label} className={`status-circle ${item.className}`}>
+              <span className="stat-label">{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
 
-      <p className="subtitle">
-        Fill in your work details for the selected week.
-      </p>
-
-      {/* Employee Details */}
-
-      <div className="section">
-
+      <section className="section">
         <h2>Employee Details</h2>
 
         <div className="form-grid">
-
           <div className="form-group">
-
             <label>Employee ID</label>
-
-            <input
-              type="text"
-              value="EMP001"
-              readOnly
-            />
-
+            <input type="text" value={DEFAULT_EMPLOYEE.id} readOnly />
           </div>
 
           <div className="form-group">
-
             <label>Employee Name</label>
-
-            <input
-              type="text"
-              value="Divya Azad"
-              readOnly
-            />
-
+            <input type="text" value={DEFAULT_EMPLOYEE.name} readOnly />
           </div>
 
           <div className="form-group">
-
             <label>Department</label>
-
-            <input
-              type="text"
-              value="Software Development"
-              readOnly
-            />
-
+            <input type="text" value={DEFAULT_EMPLOYEE.department} readOnly />
           </div>
 
           <div className="form-group">
-
             <label>Designation</label>
-
-            <input
-              type="text"
-              value="Frontend Intern"
-              readOnly
-            />
-
+            <input type="text" value={DEFAULT_EMPLOYEE.designation} readOnly />
           </div>
-
         </div>
+      </section>
 
-      </div>
-
-      {/* Week Duration */}
-
-      <div className="section">
-
+      <section className="section">
         <h2>Week Duration</h2>
 
         <div className="form-grid">
-
           <div className="form-group">
-
             <label>From Date</label>
-
-            <input type="date" />
-
+            <input
+              type="date"
+              value={reportDraft.fromDate}
+              onChange={(event) => updateDraftField("fromDate", event.target.value)}
+            />
           </div>
 
           <div className="form-group">
-
             <label>To Date</label>
-
-            <input type="date" />
-
+            <input
+              type="date"
+              value={reportDraft.toDate}
+              onChange={(event) => updateDraftField("toDate", event.target.value)}
+            />
           </div>
-
         </div>
+      </section>
 
-      </div>
-
-      {/* Activities */}
-
-      <div className="section">
-
+      <section className="section">
         <h2>Activities Performed</h2>
 
-        <table className="activity-table">
+        {activities.length > 0 ? (
+          <div className="table-wrap">
+            <table className="activity-table report-table">
+              <thead>
+                <tr>
+                  <th>Activity Title</th>
+                  <th>Project</th>
+                  <th>Date</th>
+                  <th>Hours</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
 
-          <thead>
+              <tbody>
+                {activities.map((activity) => (
+                  <tr key={activity.id}>
+                    <td>{activity.title || "-"}</td>
+                    <td>{activity.project || "-"}</td>
+                    <td>{formatDate(activity.date)}</td>
+                    <td>{activity.hours || "-"}</td>
+                    <td>{activity.status}</td>
+                    <td>{activity.priority}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-report-state">
+            No activities found. Add activities from the Activities page before creating a weekly report.
+          </div>
+        )}
+      </section>
 
-            <tr>
+      <section className="section">
+        <h2>Report Details</h2>
 
-              <th>Activity</th>
+        <div className="form-grid report-text-grid">
+          <div className="form-group full-width">
+            <label>Deliverables</label>
+            <textarea
+              rows="4"
+              value={reportDraft.deliverables}
+              onChange={(event) => updateDraftField("deliverables", event.target.value)}
+              placeholder="Summarize the completed deliverables"
+            />
+          </div>
 
-              <th>Hours Spent</th>
+          <div className="form-group full-width">
+            <label>Challenges</label>
+            <textarea
+              rows="4"
+              value={reportDraft.challenges}
+              onChange={(event) => updateDraftField("challenges", event.target.value)}
+              placeholder="Note blockers, risks, or issues"
+            />
+          </div>
 
-              <th>Status</th>
+          <div className="form-group full-width">
+            <label>Next Week Plan</label>
+            <textarea
+              rows="4"
+              value={reportDraft.nextWeekPlan}
+              onChange={(event) => updateDraftField("nextWeekPlan", event.target.value)}
+              placeholder="Outline goals for the next week"
+            />
+          </div>
 
-              <th>Action</th>
+          <div className="form-group full-width">
+            <label>Remarks</label>
+            <textarea
+              rows="3"
+              value={reportDraft.remarks}
+              onChange={(event) => updateDraftField("remarks", event.target.value)}
+              placeholder="Optional remarks"
+            />
+          </div>
+        </div>
+      </section>
 
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {activities.map((item, index) => (
-
-              <tr key={index}>
-
-                <td>
-
-                  <input
-                    type="text"
-                    placeholder="Enter activity"
-                    value={item.activity}
-                    onChange={(e) =>
-                      handleChange(index, "activity", e.target.value)
-                    }
-                    disabled={!item.isEditing}
-                  />
-
-                </td>
-
-                <td>
-
-                  <input
-                    type="number"
-                    placeholder="Hours"
-                    min="0"
-                    value={item.hours}
-                    onChange={(e) =>
-                      handleChange(index, "hours", e.target.value)
-                    }
-                    disabled={!item.isEditing}
-                  />
-
-                </td>
-
-                <td>
-
-                  <select
-                    value={item.status}
-                    onChange={(e) =>
-                      handleChange(index, "status", e.target.value)
-                    }
-                    disabled={!item.isEditing}
-                  >
-
-                    <option>Completed</option>
-
-                    <option>In Progress</option>
-
-                    <option>Pending</option>
-
-                  </select>
-
-                </td>
-
-                <td>
-
-                  <button
-                    className="edit-btn"
-                    onClick={() => toggleEdit(index)}
-                  >
-                    {item.isEditing ? "Save" : "Edit"}
-                  </button>
-
-                  <button
-                    className="delete-btn"
-                    onClick={() => deleteActivity(index)}
-                    disabled={activities.length === 1}
-                  >
-                    Delete
-                  </button>
-
-                </td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
-
-        <button
-          className="add-btn"
-          onClick={addActivity}
-        >
-          + Add Activity
+      <div className="button-group">
+        <button className="draft-btn" type="button" onClick={handleSubmit}>
+          Create Report
         </button>
 
+        <button className="submit-btn" type="button" onClick={handleSubmit}>
+          Submit Report
+        </button>
       </div>
-      <div className="button-group">
-
-  <button
-    className="draft-btn"
-    onClick={saveDraft}
-  >
-    Save Draft
-  </button>
-
-  <button
-    className="submit-btn"
-    onClick={submitReport}
-  >
-    Submit Report
-  </button>
-
-</div>
-
     </div>
-    
-
   );
 }
 

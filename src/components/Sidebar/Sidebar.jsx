@@ -16,52 +16,80 @@ function Sidebar({ sidebarOpen }) {
   const linkClass = ({ isActive }) =>
     isActive ? "sidebar-link active" : "sidebar-link";
 
-  const handleLogout = () => {
-    navigate("/logout");
-  };
-
   return (
-    <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+    <aside className={`sidebar ${sidebarOpen ? "open" : "collapsed"}`}>
+
+
       <nav className="sidebar-nav">
-        <NavLink to="/dashboard" className={linkClass} end>
+
+        <NavLink
+          to="/dashboard"
+          className={linkClass}
+          title="Dashboard"
+          end
+        >
           <FaHome className="sidebar-icon" />
-          <span className="sidebar-text">Dashboard</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">Dashboard</span>
+          )}
         </NavLink>
 
-        <NavLink to="/profile" className={linkClass}>
+        <NavLink
+          to="/profile"
+          className={linkClass}
+          title="My Profile"
+        >
           <FaUser className="sidebar-icon" />
-          <span className="sidebar-text">My Profile</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">My Profile</span>
+          )}
         </NavLink>
 
-        <NavLink to="/weekly-report" className={linkClass}>
+        <NavLink
+          to="/weekly-report"
+          className={linkClass}
+          title="Weekly Report"
+        >
           <FaFileAlt className="sidebar-icon" />
-          <span className="sidebar-text">Weekly Report</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">Weekly Report</span>
+          )}
         </NavLink>
 
-        <NavLink to="/activities" className={linkClass}>
+        <NavLink
+          to="/activities"
+          className={linkClass}
+          title="Current Activities"
+        >
           <FaTasks className="sidebar-icon" />
-          <span className="sidebar-text">Current Activities</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">Current Activities</span>
+          )}
         </NavLink>
 
-        <NavLink to="/reports" className={linkClass}>
+        <NavLink
+          to="/reports"
+          className={linkClass}
+          title="My Reports"
+        >
           <FaClipboardList className="sidebar-icon" />
-          <span className="sidebar-text">My Reports</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">My Reports</span>
+          )}
         </NavLink>
 
-        <NavLink to="/documents" className={linkClass}>
+        <NavLink
+          to="/documents"
+          className={linkClass}
+          title="Documents"
+        >
           <FaFolder className="sidebar-icon" />
-          <span className="sidebar-text">Documents</span>
+          {sidebarOpen && (
+            <span className="sidebar-text">Documents</span>
+          )}
         </NavLink>
-      </nav>
 
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="sidebar-link sidebar-logout-btn"
-      >
-        <FaSignOutAlt className="sidebar-icon" />
-        <span className="sidebar-text">Logout</span>
-      </button>
+      </nav>
     </aside>
   );
 }
