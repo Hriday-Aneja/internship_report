@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "../../components/PageShell/PageShell.css";
 import ActivityTable from "../../components/ActivityTable/ActivityTable";
+import Toast from "../../components/Toast/Toast";
+import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 
 
 import {
@@ -94,6 +96,10 @@ function Activities() {
   const [form, setForm] = useState(createEmptyForm);
   const [formError, setFormError] = useState("");
   const [editingDraftId, setEditingDraftId] = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingDraftId, setDeletingDraftId] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const todayString = getTodayString();
 
@@ -210,6 +216,20 @@ function Activities() {
 
   const handleDeleteDraft = (draftId) => {
     setDrafts((current) => current.filter((draft) => draft.id !== draftId));
+    setToastMessage("Activity deleted successfully!");
+    setShowToast(true);
+    setIsDeleteOpen(false);
+    setDeletingDraftId(null);
+  };
+
+  const openDeleteDialog = (draftId) => {
+    setDeletingDraftId(draftId);
+    setIsDeleteOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteOpen(false);
+    setDeletingDraftId(null);
   };
 
   const handleAddToMain = (draft) => {
@@ -219,6 +239,7 @@ function Activities() {
 
   return (
     <div className="page-shell">
+      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} tone="danger" />}
       <div className="page-shell-header activities-header">
         <div>
           <h1>Activities</h1>
@@ -302,7 +323,7 @@ function Activities() {
                   <button
                     type="button"
                     className="page-shell-button danger"
-                    onClick={() => handleDeleteDraft(draft.id)}
+                    onClick={() => openDeleteDialog(draft.id)}
                   >
                     <FontAwesomeIcon icon={faTrash} /> Delete
                   </button>
@@ -453,6 +474,25 @@ function Activities() {
           </div>
         </div>
       )}
+
+      <Dialog open={isDeleteOpen} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
+        <DialogTitle>Delete Activity</DialogTitle>
+        <DialogContent dividers>
+          <p>Do you want to delete this activity?</p>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <button type="button" className="page-shell-button secondary" onClick={closeDeleteDialog}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="page-shell-button danger"
+            onClick={() => deletingDraftId && handleDeleteDraft(deletingDraftId)}
+          >
+            Delete
+          </button>
+        </DialogActions>
+      </Dialog>
       <ActivityTable/>
     </div>
 

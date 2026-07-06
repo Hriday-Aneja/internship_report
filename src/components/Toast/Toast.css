@@ -13,6 +13,14 @@
   opacity: 0;
   animation: cw-toast-in 220ms ease forwards;
 }
+
+.cw-toast-danger {
+  background: #dc2626;
+}
+
+.cw-toast-success {
+  background: #15803d;
+}
 @keyframes cw-toast-in {
   from { transform: translateX(-50%) translateY(-6px); opacity: 0; }
   to { transform: translateX(-50%) translateY(0); opacity: 1; }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaBars,
   FaBell,
@@ -10,6 +11,7 @@ import {
 import "./Header.css";
 
 function Header({ toggleSidebar }) {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const [notifOpen, setNotifOpen] = useState(false);
@@ -60,6 +62,12 @@ function Header({ toggleSidebar }) {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    setProfileOpen(false);
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="top-header">
@@ -171,10 +179,10 @@ function Header({ toggleSidebar }) {
 
               <hr />
 
-              <div className="dropdown-item logout">
+              <button type="button" className="dropdown-item logout" onClick={handleLogout}>
                 <FaSignOutAlt />
                 Logout
-              </div>
+              </button>
 
             </div>
           )}

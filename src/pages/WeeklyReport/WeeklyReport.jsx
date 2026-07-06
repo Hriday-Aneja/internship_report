@@ -8,7 +8,7 @@ import {
   getStoredArray,
   normalizeActivity,
   removeStoredValue,
-  setStoredValue,
+  setStoredValue
 } from "../../utils/constants";
 import { formatDate, formatDateRange } from "../../utils/formatDate";
 
@@ -18,7 +18,7 @@ const createEmptyDraft = () => ({
   deliverables: "",
   challenges: "",
   nextWeekPlan: "",
-  remarks: "",
+  remarks: ""
 });
 
 const loadReportDraft = () => {
@@ -72,8 +72,12 @@ function WeeklyReport() {
 
     syncActivities();
     window.addEventListener("storage", syncActivities);
+    window.addEventListener("wwrams:activities-updated", syncActivities);
 
-    return () => window.removeEventListener("storage", syncActivities);
+    return () => {
+      window.removeEventListener("storage", syncActivities);
+      window.removeEventListener("wwrams:activities-updated", syncActivities);
+    };
   }, []);
 
   const completedCount = useMemo(
