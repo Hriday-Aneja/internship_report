@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PageShell from "../../components/PageShell/PageShell";
+import ActivityTable from "../../components/ActivityTable/ActivityTable";
 import {
   ACTIVITY_PRIORITIES,
   ACTIVITY_STATUSES,
@@ -261,7 +262,9 @@ function Activities() {
           </button>
         </div>
       </div>
+    <ActivityTable />
     </PageShell>
+    
   );
 }
 
