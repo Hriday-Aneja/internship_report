@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "../../components/PageShell/PageShell.css";
+import ActivityTable from "../../components/ActivityTable/ActivityTable";
+
+
 import {
   ACTIVITY_PRIORITIES,
   ACTIVITY_STATUSES,
@@ -25,6 +28,7 @@ import {
   faBarsProgress,
   faFlag,
 } from "@fortawesome/free-solid-svg-icons";
+
 
 /* Drafts live in their own storage key so they never pollute the main table
    until the user explicitly clicks "Add". */
@@ -449,7 +453,9 @@ function Activities() {
           </div>
         </div>
       )}
+      <ActivityTable/>
     </div>
+
   );
 }
 
