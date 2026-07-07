@@ -449,7 +449,7 @@ export default function ActivityTable() {
           rowHeight={60}
           disableRowSelectionOnClick
           hideFooterSelectedRowCount
-          pageSizeOptions={[5, 10, 20]}
+          pageSizeOptions={[5, 10, 20, 50, 100]}
           initialState={{
             pagination: {
               paginationModel: {

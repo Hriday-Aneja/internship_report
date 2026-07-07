@@ -50,6 +50,7 @@ function createEmptyForm() {
     title: "",
     project: "",
     description: "",
+    fromDate: getTodayString(),
     date: getTodayString(),
     hours: "",
     status: "Completed",
@@ -66,15 +67,50 @@ function createEmptyForm() {
    Teammates: listen with
      window.addEventListener("wwrams:activities-updated", handler)
    ------------------------------------------------------------------ */
+/* Format a Date as local YYYY-MM-DD (avoids toISOString timezone drift). */
+function toDateString(dateObject) {
+  const year = dateObject.getFullYear();
+  const month = String(dateObject.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObject.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/* Expand a From→To range into one YYYY-MM-DD string per day (inclusive). */
+function getDatesInRange(fromString, toString) {
+  const dates = [];
+  const [fy, fm, fd] = fromString.split("-").map(Number);
+  const [ty, tm, td] = toString.split("-").map(Number);
+  const cursor = new Date(fy, fm - 1, fd);
+  const end = new Date(ty, tm - 1, td);
+  let guard = 0;
+  while (cursor <= end && guard < 366) {
+    dates.push(toDateString(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+    guard += 1;
+  }
+  return dates.length > 0 ? dates : [toString];
+}
+
 export function addActivityToMainTable(activity) {
   const mainActivities = getStoredArray(STORAGE_KEYS.activities).map(normalizeActivity);
-  const confirmed = {
+
+  /* Multi-day work becomes one entry per day: same activity, each row
+     dated to its own day. Single-day work produces exactly one row. */
+  const fromDate = activity.fromDate || activity.date;
+  const toDate = activity.date;
+  const days = getDatesInRange(fromDate, toDate);
+
+  const newRows = days.map((dayString) => ({
     ...normalizeActivity({ ...activity, isEditing: false }),
+    id: createId("ACT"),
+    date: dayString,
+    fromDate: dayString,
     description: activity.description ?? "",
-  };
-  setStoredValue(STORAGE_KEYS.activities, [...mainActivities, confirmed]);
+  }));
+
+  setStoredValue(STORAGE_KEYS.activities, [...mainActivities, ...newRows]);
   window.dispatchEvent(new CustomEvent("wwrams:activities-updated"));
-  return confirmed;
+  return newRows;
 }
 
 function Activities() {
@@ -88,6 +124,7 @@ function Activities() {
     getStoredArray(DRAFTS_KEY).map((draft) => ({
       ...normalizeActivity(draft),
       description: draft.description ?? "",
+      fromDate: draft.fromDate ?? draft.date ?? "",
     }))
   );
 
@@ -121,6 +158,7 @@ function Activities() {
           getStoredArray(DRAFTS_KEY).map((draft) => ({
             ...normalizeActivity(draft),
             description: draft.description ?? "",
+            fromDate: draft.fromDate ?? draft.date ?? "",
           }))
         );
       }
@@ -167,6 +205,7 @@ function Activities() {
       title: draft.title,
       project: draft.project,
       description: draft.description ?? "",
+      fromDate: draft.fromDate || draft.date || todayString,
       date: draft.date || todayString,
       hours: draft.hours,
       status: draft.status,
@@ -184,15 +223,26 @@ function Activities() {
   };
 
   const updateForm = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      /* If the To date moves earlier than From, pull From along. */
+      if (field === "date" && next.fromDate && value && next.fromDate > value) {
+        next.fromDate = value;
+      }
+      return next;
+    });
   };
 
   const handleSave = () => {
     if (!form.title.trim()) return setFormError("Activity title is required.");
     if (!form.project.trim()) return setFormError("Project name is required.");
-    if (!form.date) return setFormError("Please choose a date.");
+    if (!form.date) return setFormError("Please choose the To date.");
     if (form.date > todayString) {
-      return setFormError("Date cannot be in the future. Choose today or a past date.");
+      return setFormError("To date cannot be in the future. Choose today or a past date.");
+    }
+    if (!form.fromDate) return setFormError("Please choose the From date.");
+    if (form.fromDate > form.date) {
+      return setFormError("From date cannot be after the To date.");
     }
     const hoursNumber = Number(form.hours);
     if (!String(form.hours).trim() || Number.isNaN(hoursNumber) || hoursNumber <= 0) {
@@ -246,7 +296,7 @@ function Activities() {
           <p>Create and manage work activities for weekly reporting.</p>
         </div>
         <button type="button" className="activities-add-button" onClick={openCreateModal}>
-          <FontAwesomeIcon icon={faPlus} /> Add New Activity
+          <FontAwesomeIcon icon={faPlus} /> Add 
         </button>
       </div>
 
@@ -291,7 +341,11 @@ function Activities() {
                     <tr>
                       <td>{draft.title}</td>
                       <td>{draft.project}</td>
-                      <td>{draft.date}</td>
+                      <td>
+                        {draft.fromDate && draft.fromDate !== draft.date
+                          ? `${draft.fromDate} \u2192 ${draft.date}`
+                          : draft.date}
+                      </td>
                       <td>{draft.hours}</td>
                       <td>{draft.status}</td>
                       <td>{draft.priority}</td>
@@ -370,6 +424,20 @@ function Activities() {
                 </div>
               </label>
 
+
+              <label className="activities-field">
+                <span>Description</span>
+                <div className="activities-input-wrap activities-textarea-wrap">
+                  <FontAwesomeIcon icon={faAlignLeft} className="activities-input-icon" />
+                  <textarea
+                    rows="2"
+                    value={form.description}
+                    placeholder="Short description of the work"
+                    onChange={(event) => updateForm("description", event.target.value)}
+                  />
+                </div>
+              </label>
+
               <label className="activities-field">
                 <span>Project</span>
                 <div className="activities-input-wrap">
@@ -383,22 +451,22 @@ function Activities() {
                 </div>
               </label>
 
-              <label className="activities-field">
-                <span>Project Description</span>
-                <div className="activities-input-wrap activities-textarea-wrap">
-                  <FontAwesomeIcon icon={faAlignLeft} className="activities-input-icon" />
-                  <textarea
-                    rows="2"
-                    value={form.description}
-                    placeholder="Short description of the work"
-                    onChange={(event) => updateForm("description", event.target.value)}
-                  />
-                </div>
-              </label>
-
               <div className="activities-form-grid">
                 <label className="activities-field">
-                  <span>Date</span>
+                  <span>From</span>
+                  <div className="activities-input-wrap">
+                    <FontAwesomeIcon icon={faCalendarDays} className="activities-input-icon" />
+                    <input
+                      type="date"
+                      value={form.fromDate}
+                      max={form.date || todayString}
+                      onChange={(event) => updateForm("fromDate", event.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="activities-field">
+                  <span>To</span>
                   <div className="activities-input-wrap">
                     <FontAwesomeIcon icon={faCalendarDays} className="activities-input-icon" />
                     <input
@@ -464,11 +532,11 @@ function Activities() {
             </div>
 
             <div className="activities-modal-footer">
-              <button type="button" className="page-shell-button secondary" onClick={closeModal}>
-                <FontAwesomeIcon icon={faXmark} /> Cancel
-              </button>
               <button type="button" className="page-shell-button primary" onClick={handleSave}>
                 <FontAwesomeIcon icon={faFloppyDisk} /> Save
+              </button>
+              <button type="button" className="page-shell-button secondary" onClick={closeModal}>
+                <FontAwesomeIcon icon={faXmark} /> Cancel
               </button>
             </div>
           </div>
@@ -493,7 +561,7 @@ function Activities() {
           </button>
         </DialogActions>
       </Dialog>
-      <ActivityTable/>
+      <ActivityTable />
     </div>
 
   );
