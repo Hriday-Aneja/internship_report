@@ -45,16 +45,7 @@ function Sidebar({ sidebarOpen }) {
           )}
         </NavLink>
 
-        <NavLink
-          to="/weekly-report"
-          className={linkClass}
-          title="Weekly Report"
-        >
-          <FaFileAlt className="sidebar-icon" />
-          {sidebarOpen && (
-            <span className="sidebar-text">Weekly Report</span>
-          )}
-        </NavLink>
+        
 
         <NavLink
           to="/activities"
@@ -64,6 +55,16 @@ function Sidebar({ sidebarOpen }) {
           <FaTasks className="sidebar-icon" />
           {sidebarOpen && (
             <span className="sidebar-text"> Activities</span>
+          )}
+        </NavLink>
+        <NavLink
+          to="/weekly-report"
+          className={linkClass}
+          title="Weekly Report"
+        >
+          <FaFileAlt className="sidebar-icon" />
+          {sidebarOpen && (
+            <span className="sidebar-text">Weekly Report</span>
           )}
         </NavLink>
 

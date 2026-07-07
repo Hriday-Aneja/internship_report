@@ -202,8 +202,8 @@
 .profile-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 12px;
+    gap: 8px;
+    padding: 2px 8px;
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -216,20 +216,25 @@
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+
     border-radius: 50%;
     background: var(--primary-color);
-    color: #ffffff;
+    color: #fff;
+
     display: flex;
     justify-content: center;
     align-items: center;
-    font-weight: 700;
+
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .avatar.large {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
     font-size: 20px;
 }
 
