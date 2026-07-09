@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridPagination } from "@mui/x-data-grid";
+import * as XLSX from "xlsx";
 
-import { Assignment, Delete, Edit, Refresh, Search } from "@mui/icons-material";
+import { Assignment, Delete, Edit, FileDownload, Refresh, Search } from "@mui/icons-material";
 
 import {
   Box,
@@ -169,6 +170,66 @@ export default function ActivityTable() {
         row.project.toLowerCase().includes(search.toLowerCase())
     );
   }, [rows, search]);
+  /* ---------------- Excel export ---------------- */
+
+  const handleExportExcel = () => {
+    const exportData = filteredRows.map((row, index) => ({
+      "#": index + 1,
+      Activity: row.activity,
+      Project: row.project,
+      Date: row.date,
+      Hours: row.hours,
+      Status: row.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    worksheet["!cols"] = [
+      { wch: 5 },
+      { wch: 30 },
+      { wch: 20 },
+      { wch: 14 },
+      { wch: 8 },
+      { wch: 14 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Activities");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `activities_${today}.xlsx`);
+  };
+
+  /* Footer: Export button on the left, DataGrid's own pagination on the right */
+  const TableFooter = () => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        pl: 2,
+      }}
+    >
+      <Button
+        size="small"
+        startIcon={<FileDownload />}
+        onClick={handleExportExcel}
+        disabled={filteredRows.length === 0}
+        sx={{
+          textTransform: "none",
+          fontWeight: 600,
+          borderRadius: 2,
+          color: "#0f2747",
+          "&:hover": { bgcolor: "#EEF5FF" },
+        }}
+      >
+        Export to Excel
+      </Button>
+
+      <GridPagination />
+    </Box>
+  );
+
 
   const columns = [
     {
@@ -292,8 +353,8 @@ export default function ActivityTable() {
         borderRadius: 4,
         overflow: "hidden",
         border: "1px solid #E5E7EB",
-        marginTop: 3,
         backgroundColor: "#fff",
+        marginTop: 3, 
       }}
     >
     {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} tone="danger" />}
@@ -458,6 +519,7 @@ export default function ActivityTable() {
             },
           }}
           slots={{
+            footer: TableFooter,
             noRowsOverlay: () => (
               <Box
                 sx={{
@@ -592,24 +654,6 @@ export default function ActivityTable() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={isDeleteOpen} onClose={closeDeleteDialog} fullWidth maxWidth="xs">
-        <DialogTitle>Delete Activity</DialogTitle>
-        <DialogContent dividers>
-          <Typography>Do you want to delete this activity?</Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={closeDeleteDialog} variant="outlined">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => deletingRow && handleDeleteRow(deletingRow)}
-            variant="contained"
-            color="error"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Paper>
   );
 }
