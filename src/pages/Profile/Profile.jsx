@@ -1,6 +1,8 @@
 import PageShell from "../../components/PageShell/PageShell";
+import { getCurrentUser } from "../../utils/auth";
 
 function Profile() {
+  const currentUser = getCurrentUser();
   return (
     <PageShell
       title="My Profile"
@@ -8,16 +10,16 @@ function Profile() {
     >
       <div className="page-shell-card">
         <p>
-          <strong>Name:</strong> Paarth Sharma
+          <strong>Name:</strong> {currentUser.fullName}
         </p>
         <p>
-          <strong>Employee ID:</strong> EMP001
+          <strong>Employee ID:</strong> {currentUser.employeeId}
         </p>
         <p>
-          <strong>Department:</strong> Software Development
+          <strong>Department:</strong> {currentUser.department}
         </p>
         <p>
-          <strong>Designation:</strong> Project Engineer
+          <strong>Designation:</strong> {currentUser.designation}
         </p>
       </div>
     </PageShell>

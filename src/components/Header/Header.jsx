@@ -9,9 +9,12 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import "./Header.css";
+import { getCurrentUser, getInitial } from "../../utils/auth";
 
 function Header({ toggleSidebar }) {
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+  const avatarInitial = getInitial(currentUser.fullName);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const [notifOpen, setNotifOpen] = useState(false);
@@ -141,11 +144,11 @@ function Header({ toggleSidebar }) {
             className="profile-btn"
             onClick={() => setProfileOpen(!profileOpen)}
           >
-            <div className="avatar">P</div>
+            <div className="avatar">{avatarInitial}</div>
 
             <div className="user-text">
-              <strong>Divya Azad</strong>
-              <p>EMP001</p>
+              <strong>{currentUser.fullName}</strong>
+              <p>{currentUser.employeeId}</p>
             </div>
 
             <FaChevronDown />
@@ -157,12 +160,12 @@ function Header({ toggleSidebar }) {
               <div className="profile-header">
 
                 <div className="avatar large">
-                  P
+                  {avatarInitial}
                 </div>
 
                 <div>
-                  <strong>Divya Azad</strong>
-                  <p>EMP001</p>
+                  <strong>{currentUser.fullName}</strong>
+                  <p>{currentUser.employeeId}</p>
                 </div>
 
               </div>

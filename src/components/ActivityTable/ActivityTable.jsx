@@ -292,7 +292,7 @@ export default function ActivityTable() {
         borderRadius: 4,
         overflow: "hidden",
         border: "1px solid #E5E7EB",
-        borderTop: "4px solid #0f2747",
+        marginTop: 3,
         backgroundColor: "#fff",
       }}
     >
