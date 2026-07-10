@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./WeeklyReport.css";
 import {
-  DEFAULT_EMPLOYEE,
   STORAGE_KEYS,
   createId,
   getStoredArray,
@@ -11,6 +10,7 @@ import {
   setStoredValue
 } from "../../utils/constants";
 import { formatDate, formatDateRange } from "../../utils/formatDate";
+import { getCurrentEmployee } from "../../utils/auth";
 
 const createEmptyDraft = () => ({
   fromDate: "",
@@ -49,6 +49,7 @@ const loadReportDraft = () => {
 };
 
 function WeeklyReport() {
+  const employee = getCurrentEmployee();
   const navigate = useNavigate();
   const [reportDraft, setReportDraft] = useState(loadReportDraft);
   const [activities, setActivities] = useState(() =>
@@ -134,7 +135,7 @@ function WeeklyReport() {
     const submittedReport = {
       reportId: createId("RPT"),
       status: "Submitted",
-      employee: DEFAULT_EMPLOYEE,
+      employee,
       weekDuration: {
         fromDate: reportDraft.fromDate,
         toDate: reportDraft.toDate,
@@ -206,22 +207,22 @@ function WeeklyReport() {
         <div className="form-grid">
           <div className="form-group">
             <label>Employee ID</label>
-            <input type="text" value={DEFAULT_EMPLOYEE.id} readOnly />
+            <input type="text" value={employee.id} readOnly />
           </div>
 
           <div className="form-group">
             <label>Employee Name</label>
-            <input type="text" value={DEFAULT_EMPLOYEE.name} readOnly />
+            <input type="text" value={employee.name} readOnly />
           </div>
 
           <div className="form-group">
             <label>Department</label>
-            <input type="text" value={DEFAULT_EMPLOYEE.department} readOnly />
+            <input type="text" value={employee.department} readOnly />
           </div>
 
           <div className="form-group">
             <label>Designation</label>
-            <input type="text" value={DEFAULT_EMPLOYEE.designation} readOnly />
+            <input type="text" value={employee.designation} readOnly />
           </div>
         </div>
       </section>

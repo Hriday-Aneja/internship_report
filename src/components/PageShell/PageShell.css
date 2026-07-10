@@ -204,6 +204,17 @@
   font-size: 1rem;
 }
 
+.page-shell-button.print-pdf {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.page-shell-button.print-pdf:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
 @media (max-width: 768px) {
   .page-shell-kpis {
     grid-template-columns: 1fr;

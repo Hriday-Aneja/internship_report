@@ -6,6 +6,7 @@ import {
   setStoredValue,
 } from "../../utils/constants";
 import { formatDate, formatDateTime, formatDateRange } from "../../utils/formatDate";
+import { printReportPdf } from "../../utils/printReport";
 
 function Reports() {
   const [reports, setReports] = useState(() => getStoredArray(STORAGE_KEYS.reports));
@@ -102,6 +103,9 @@ function Reports() {
                         <button className="page-shell-button primary" type="button" onClick={() => openReport(report)}>
                           View Report
                         </button>
+                        <button className="page-shell-button secondary" type="button" onClick={() => printReportPdf(report)}>
+                          Print PDF
+                        </button>
                         <button className="page-shell-button danger" type="button" onClick={() => deleteReport(report.reportId)}>
                           Delete Report
                         </button>
@@ -125,9 +129,14 @@ function Reports() {
                 <h2 id="report-modal-title">Report Information</h2>
                 <p>{selectedReport.reportId}</p>
               </div>
-              <button className="page-shell-button secondary" type="button" onClick={closeModal}>
-                Close
-              </button>
+              <div className="page-shell-actions">
+                <button className="page-shell-button primary print-pdf" type="button" onClick={() => printReportPdf(selectedReport)}>
+                  Print PDF
+                </button>
+                <button className="page-shell-button secondary" type="button" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
             </div>
 
             <div className="page-shell-modal-content">

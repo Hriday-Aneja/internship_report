@@ -29,3 +29,15 @@ export function getInitial(name) {
   const trimmed = (name || "").trim();
   return trimmed ? trimmed[0].toUpperCase() : "U";
 }
+
+/* Current user mapped to the employee shape used by WeeklyReport and
+   saved reports: { id, name, department, designation }. */
+export function getCurrentEmployee() {
+  const user = getCurrentUser();
+  return {
+    id: user.employeeId || "",
+    name: user.fullName || "User",
+    department: user.department || "",
+    designation: user.designation || "",
+  };
+}
